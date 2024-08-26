@@ -10,7 +10,7 @@ Blueprint Partner API v2 to integrate Blueprint into your application.
 3. Run `npm start` to start the application.
 
 Review Blueprint Partner API v2 documentation at
-[https://api-v2-docs.blueprint-health.com](https://api-v2-doc.blueprint-health.com) for more information
+[https://api-v2-docs.blueprint-health.com](https://api-v2-docs.blueprint-health.com) for more information
 and API reference.
 
 This sample application has been built and tested with Node.js v20.

@@ -9,13 +9,13 @@ const port = process.env.PORT || 3000;
 // Set up sample data that represents what is in the EHR database.
 // In this example, the EHR is also storing the blueprintId for each patient.
 const patients = [
-  { id: 1, name: 'John Appleseed', age: 35, diagnosis: 'Adjustment Disorder', blueprintId: '94669402-55c3-11ef-84f1-0ad8416d752d' },
-  { id: 2, name: 'Roger Client', age: 48, diagnosis: 'Generalized Anxiety Disorder', blueprintId: '21cbbe44-5691-11ef-8ce3-0ad8416d752d' }
+  { id: 1, name: 'Ernie Banks', age: 35, diagnosis: 'Adjustment Disorder', blueprintId: '4480a2ec-66e5-11ef-9314-0ad8416d752d' },
+  { id: 2, name: 'Pepper Potts', age: 48, diagnosis: 'Generalized Anxiety Disorder', blueprintId: '59e6ab22-66e5-11ef-93ae-0ad8416d752d' }
 ];
 
 // Note that this sample password does not match the Blueprint password for this clinician.
 // This is intended to be the EHR password for this user.
-const providerUsername = 'roger+staging+partner@blueprint-health.com'
+const providerUsername = 'sample.provider@example.com'
 const providerPassword = 'password'
 
 app.use(express.static(path.join(__dirname, 'public')));

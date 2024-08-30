@@ -18,6 +18,8 @@ const providerPassword = 'password'
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Login page
 app.get('/login', (req, res) => {
@@ -36,12 +38,13 @@ app.post('/login', (req, res) => {
 
 // Route for the patient list page
 app.get('/patients', (req, res) => {
-  let patientList = '<h2>Patient List</h2><ul>';
-  patients.forEach(patient => {
-      patientList += `<li><a href="/patients/${patient.id}">${patient.name}</a></li>`;
-  });
-  patientList += '</ul>';
-  res.send(patientList);
+  // let patientList = '<h2>Patient List</h2><ul>';
+  // patients.forEach(patient => {
+  //     patientList += `<li><a href="/patients/${patient.id}">${patient.name}</a></li>`;
+  // });
+  // patientList += '</ul>';
+  // res.send(patientList);
+  res.render('patients', { items: patients });
 });
 
 // Route for individual patient profiles

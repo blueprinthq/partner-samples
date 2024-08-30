@@ -4,30 +4,30 @@ const path = require('path');
 const app = express();
 const port = 3333;
 
-// Sample patient data
+// Set up sample data that represents what is in the EHR database.
+// In this example, the EHR is also storing the blueprintId for each patient.
 const patients = [
-  { id: 1, name: 'John Doe', age: 35, condition: 'Flu' },
-  { id: 2, name: 'Jane Smith', age: 28, condition: 'Asthma' },
-  { id: 3, name: 'Michael Johnson', age: 42, condition: 'Diabetes' }
+  { id: 1, name: 'John Appleseed', age: 35, diagnosis: 'Adjustment Disorder', blueprintId: '94669402-55c3-11ef-84f1-0ad8416d752d' },
+  { id: 2, name: 'Roger Client', age: 48, diagnosis: 'Generalized Anxiety Disorder', blueprintId: '21cbbe44-5691-11ef-8ce3-0ad8416d752d' }
 ];
 
-// Middleware to serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Note that this sample password does not match the Blueprint password for this clinician.
+// This is intended to be the EHR password for this user.
+const providerUsername = 'roger+staging+partner@blueprint-health.com'
+const providerPassword = 'password'
 
-// Parse form data
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve the login page
+// Login page
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Handle form submission
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   
-  // Basic validation and response
-  if (username === 'admin' && password === 'password') {
+  if (username === providerUsername && password === providerPassword) {
     res.redirect('/patients');
   } else {
     res.send('Invalid credentials, please try again.');
@@ -61,7 +61,7 @@ app.get('/patients/:id', (req, res) => {
           <h2>Patient Profile</h2>
           <p><strong>Name:</strong> ${patient.name}</p>
           <p><strong>Age:</strong> ${patient.age}</p>
-          <p><strong>Condition:</strong> ${patient.condition}</p>
+          <p><strong>Diagnosis:</strong> ${patient.diagnosis}</p>
           <a href="/patients">Back to Patient List</a>
           <div id="blueprint-container"></div>
       `);
@@ -72,5 +72,5 @@ app.get('/patients/:id', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Sample EHR is running on http://localhost:${port}`);
 });

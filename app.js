@@ -36,18 +36,12 @@ app.post('/login', (req, res) => {
   }
 });
 
-// Route for the patient list page
+// Patients page
 app.get('/patients', (req, res) => {
-  // let patientList = '<h2>Patient List</h2><ul>';
-  // patients.forEach(patient => {
-  //     patientList += `<li><a href="/patients/${patient.id}">${patient.name}</a></li>`;
-  // });
-  // patientList += '</ul>';
-  // res.send(patientList);
   res.render('patients', { items: patients });
 });
 
-// Route for individual patient profiles
+// Patient chart
 app.get('/patients/:id', (req, res) => {
   const patientId = parseInt(req.params.id);
   const patient = patients.find(p => p.id === patientId);
@@ -73,7 +67,7 @@ app.get('/patients/:id', (req, res) => {
   }
 });
 
-// Start the server
+// Start the application.
 app.listen(port, () => {
   console.log(`Sample EHR is running on http://localhost:${port}`);
 });

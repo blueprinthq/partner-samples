@@ -4,12 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Chart</title>
+    <style>
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .column {
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1><%= item.name %></h1>
-    <p><strong>Age:</strong> <%= item.age %></p>
-    <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
-    <div id="blueprint-container"></div>
+    <div class="container">
+        <div class="column">
+            <h1><%= item.name %></h1>
+            <p><strong>Age:</strong> <%= item.age %></p>
+            <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
+            <textarea id="progress-note" style="width: 320px; height: 240px;"></textarea>
+        </div>
+        <div class="column">
+            <div id="blueprint-container"></div>
+        </div>
+    </div>
 
     <!-- This is the minimum you need to do, drop-in. -->
     <script>
@@ -49,10 +67,16 @@
 
         Blueprint.authenticate(clinicianTokens, '<%= clinicianId %>');
         Blueprint.selectClient(`<%= item.blueprintId %>`)
+        Blueprint.onCopyNoteClicked((note) => {
+            // This is the signal that the user is done editing the note.
+            console.log('Exporting note to EHR...');
+            const progressNote = document.getElementById('progress-note');
+            progressNote.value = note;
+        });
     </script>
 
     <p>
-      <a href="/patients">Back to Patient List</a>
+        <a href="/patients">Back to Patient List</a>
     </p>
 </body>
 </html>

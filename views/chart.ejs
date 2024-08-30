@@ -16,10 +16,13 @@
         window.blueprintSettings = {
           containerId: 'blueprint-container'
         }
-
-        //Blueprint.selectClient(${patient.id})
     </script>
     <script src="https://embed.stagingprint.com/index.min.js"></script>
+
+    <!-- With a little extra code you can select a client. -->
+    <script>
+        Blueprint.selectClient(`<%= item.blueprintId %>`)
+    </script>
 
     <p>
       <a href="/patients">Back to Patient List</a>

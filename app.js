@@ -1,22 +1,22 @@
 require('dotenv').config()
 const express = require('express');
 const path = require('path');
+const bodyParser = require('body-parser');
+const fs = require('fs');
 const fetch = require('node-fetch');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Set up sample data that represents what is in the EHR database.
-// In this example, the EHR is also storing the blueprintId for each patient.
-const patients = [
-  { id: 1, name: 'John Appleseed', age: 35, diagnosis: 'Adjustment Disorder', blueprintId: '94669402-55c3-11ef-84f1-0ad8416d752d' },
-  { id: 2, name: 'Roger Client', age: 48, diagnosis: 'Generalized Anxiety Disorder', blueprintId: '21cbbe44-5691-11ef-8ce3-0ad8416d752d' }
-];
-
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Set up sample data that represents what is in the EHR database.
+// In this example, the EHR is also storing the blueprintId for each patient.
+const patients = JSON.parse(fs.readFileSync('data/patients.json'));
 
 // Login page
 app.get('/login', (req, res) => {

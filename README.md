@@ -7,7 +7,9 @@ Blueprint Partner API v2 to integrate Blueprint into your application.
 
 1. Clone the repository.
 2. Run `npm install` to install the dependencies.
-3. Run `npm start` to start the application.
+3. Create an `.env` file based on the sample. `cp .env.sample .env`
+4. Update the values in the `.env` file with your Blueprint Partner API v2 credentials.
+5. Run `npm start` to start the application.
 
 Review Blueprint Partner API v2 documentation at
 [https://api-v2-docs.blueprint-health.com](https://api-v2-docs.blueprint-health.com) for more information

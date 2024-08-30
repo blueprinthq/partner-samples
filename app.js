@@ -4,7 +4,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 
 const app = express();
-const port = 3333;
+const port = process.env.PORT || 3000;
 
 // Set up sample data that represents what is in the EHR database.
 // In this example, the EHR is also storing the blueprintId for each patient.

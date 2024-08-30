@@ -15,8 +15,9 @@ const patients = [
 
 // Note that this sample password does not match the Blueprint password for this clinician.
 // This is intended to be the EHR password for this user.
-const providerUsername = 'sample.provider@example.com'
-const providerPassword = 'password'
+const providerUsername = 'sample.provider@example.com';
+const providerPassword = 'password';
+const providerBlueprintId = process.env.BLUEPRINT_CLINICIAN_ID;
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
@@ -44,9 +45,47 @@ app.get('/patients', (req, res) => {
 });
 
 // Patient chart
-app.get('/patients/:id', (req, res) => {
+app.get('/patients/:id', async (req, res) => {
   const patientId = parseInt(req.params.id);
   const patient = patients.find(p => p.id === patientId);
+
+  // Authenticate with the Blueprint server-to-server API.
+  const tokenResponse = await fetch(
+    `${process.env.BLUEPRINT_API_URL}/partners/authenticate`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+      },
+      body: JSON.stringify({
+        clientId: process.env.BLUEPRINT_API_CLIENT_ID,
+        clientSecret: process.env.BLUEPRINT_API_CLIENT_SECRET,
+      }),
+    }
+  );
+
+  const { accessToken } = await tokenResponse.json();
+  console.log('accessToken', accessToken); // TODO Remove
+
+  // Automatically authenticate the clinician.
+  // const clinicianId = providerBlueprintId;
+  // const clinicianEmail = providerUsername;
+  // const authResponse = await fetch(
+  //   `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
+  //   {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Access-Token': accessToken,
+  //       'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+  //     },
+  //     body: JSON.stringify({ email: clinicianEmail }),
+  //   }
+  // )
+
+  // const clinicianTokens = await authResponse.json();
+  // console.log('clinicianTokens', clinicianTokens); // TODO Remove
 
   if (patient) {
     res.render('chart', { item: patient });

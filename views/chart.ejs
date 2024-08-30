@@ -32,6 +32,7 @@
 
     <!-- With a little extra code you can select a client. -->
     <script>
+        Blueprint.authenticate(`<%= clinicianTokens %>`, `<%= clinicianId %>}`)
         Blueprint.selectClient(`<%= item.blueprintId %>`)
     </script>
 

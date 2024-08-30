@@ -66,29 +66,28 @@ app.get('/patients/:id', async (req, res) => {
   );
 
   const { accessToken } = await tokenResponse.json();
-  console.log('accessToken', accessToken); // TODO Remove
 
   // Automatically authenticate the clinician.
-  // const clinicianId = providerBlueprintId;
-  // const clinicianEmail = providerUsername;
-  // const authResponse = await fetch(
-  //   `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
-  //   {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'Access-Token': accessToken,
-  //       'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
-  //     },
-  //     body: JSON.stringify({ email: clinicianEmail }),
-  //   }
-  // )
+  const clinicianId = providerBlueprintId;
+  const clinicianEmail = providerUsername;
+  const authResponse = await fetch(
+    `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Token': accessToken,
+        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+      },
+      body: JSON.stringify({ email: clinicianEmail }),
+    }
+  )
 
-  // const clinicianTokens = await authResponse.json();
-  // console.log('clinicianTokens', clinicianTokens); // TODO Remove
+  const clinicianTokens = await authResponse.json();
+  console.log('clinicianTokens', clinicianTokens); // TODO Remove
 
   if (patient) {
-    res.render('chart', { item: patient });
+    res.render('chart', { item: patient, clinicianTokens: clinicianTokens, clinicianId: clinicianId });
   } else {
     res.status(404).send('Patient not found');
   }

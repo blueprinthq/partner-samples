@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Chart</title>
+</head>
+<body>
+    <h1><%= item.name %></h1>
+    <p><strong>Age:</strong> <%= item.age %></p>
+    <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
+    <div id="blueprint-container"></div>
+
+    <!-- This is the minimum you need to do, drop-in. -->
+    <script>
+        window.blueprintSettings = {
+          containerId: 'blueprint-container'
+        }
+
+        //Blueprint.selectClient(${patient.id})
+    </script>
+    <script src="https://embed.stagingprint.com/index.min.js"></script>
+
+    <p>
+      <a href="/patients">Back to Patient List</a>
+    </p>
+</body>
+</html>

@@ -47,23 +47,9 @@ app.get('/patients/:id', (req, res) => {
   const patient = patients.find(p => p.id === patientId);
 
   if (patient) {
-      res.send(`
-          <script>
-            window.blueprintSettings = {
-              containerId: 'blueprint-container'
-            }
-          </script>
-          <script src="https://embed.stagingprint.com/index.min.js"></script>
-          <script>Blueprint.selectClient(${patient.id})</script>
-          <h2>Patient Profile</h2>
-          <p><strong>Name:</strong> ${patient.name}</p>
-          <p><strong>Age:</strong> ${patient.age}</p>
-          <p><strong>Diagnosis:</strong> ${patient.diagnosis}</p>
-          <a href="/patients">Back to Patient List</a>
-          <div id="blueprint-container"></div>
-      `);
+    res.render('chart', { item: patient });
   } else {
-      res.status(404).send('Patient not found');
+    res.status(404).send('Patient not found');
   }
 });
 

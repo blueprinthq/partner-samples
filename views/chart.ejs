@@ -32,7 +32,17 @@
 
     <!-- With a little extra code you can select a client. -->
     <script>
-        Blueprint.authenticate(`<%= clinicianTokens %>`, `<%= clinicianId %>}`)
+        // Decode HTML entities and parse JSON string
+        function decodeHtmlEntities(encodedString) {
+            const textArea = document.createElement('textarea');
+            textArea.innerHTML = encodedString;
+            return textArea.value;
+        }
+
+        const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
+        const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
+
+        Blueprint.authenticate(clinicianTokens, '<%= clinicianId %>');
         Blueprint.selectClient(`<%= item.blueprintId %>`)
     </script>
 

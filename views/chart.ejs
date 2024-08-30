@@ -32,7 +32,22 @@
 
     <!-- With a little extra code you can select a client. -->
     <script>
-        Blueprint.authenticate(`<%= clinicianTokens %>`, `<%= clinicianId %>}`)
+        // Decode HTML entities and parse JSON string.
+        // If your application uses server-side templating you might need to do
+        // something like this so that the access token is properly transferred
+        // to the front end. If you are using a front-end framework like React,
+        // then passing the access token from the backend to your front end and
+        // then to Blueprint is more straightforward.
+        function decodeHtmlEntities(encodedString) {
+            const textArea = document.createElement('textarea');
+            textArea.innerHTML = encodedString;
+            return textArea.value;
+        }
+
+        const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
+        const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
+
+        Blueprint.authenticate(clinicianTokens, '<%= clinicianId %>');
         Blueprint.selectClient(`<%= item.blueprintId %>`)
     </script>
 

@@ -90,6 +90,43 @@ app.get('/patients/:id', async (req, res) => {
   }
 });
 
+// Note Generated webhook
+app.post('/note', async (req, res) => {
+  const {
+    // progressNoteId,
+    // sessionId,
+    // clientId,
+    // clinicianId,
+    // clinicId,
+    // organization,
+    progressNoteUrl,
+  } = req.body;
+
+  const noteResponse = await fetch(progressNoteUrl, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Token': accessToken,
+      'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+    },
+  })
+
+  const {
+    // id,
+    // sessionId,
+    note,
+    // template: {
+    //   noteType,
+    //   sessionType,
+    //   title,
+    //   sections,
+    // },
+    // preferences,
+  } = await noteResponse.json();
+
+  res.send();
+});
+
 // Start the application.
 app.listen(port, () => {
   console.log(`Sample EHR is running on http://localhost:${port}`);

@@ -8,6 +8,8 @@ const fetch = require('node-fetch');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(express.json())
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -88,6 +90,43 @@ app.get('/patients/:id', async (req, res) => {
   } else {
     res.status(404).send('Patient not found');
   }
+});
+
+// Note Generated webhook
+app.post('/note', async (req, res) => {
+  const {
+    // progressNoteId,
+    // sessionId,
+    // clientId,
+    // clinicianId,
+    // clinicId,
+    // organization,
+    progressNoteUrl,
+  } = req.body;
+
+  const noteResponse = await fetch(progressNoteUrl, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Token': accessToken,
+      'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+    },
+  })
+
+  const {
+    // id,
+    // sessionId,
+    note,
+    // template: {
+    //   noteType,
+    //   sessionType,
+    //   title,
+    //   sections,
+    // },
+    // preferences,
+  } = await noteResponse.json();
+
+  res.send();
 });
 
 // Start the application.

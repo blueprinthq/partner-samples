@@ -4,6 +4,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -92,6 +93,14 @@ app.get('/patients/:id', async (req, res) => {
 
 // Note Generated webhook
 app.post('/note', async (req, res) => {
+  // Verify X-Blueprint-Signature
+  const hmac = crypto.createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET);
+  hmac.update(req.body);
+  const signature = hmac.digest('hex');
+
+  if (req.headers['X-Blueprint-Signature'] !== signature)
+    return res.status(401).send('Invalid signature');
+
   const {
     // progressNoteId,
     // sessionId,

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Chart</title>
+    <style>
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .column {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="column">
+            <h1><%= item.name %></h1>
+            <p><strong>Age:</strong> <%= item.age %></p>
+            <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
+            <textarea id="progress-note" style="width: 320px; height: 240px;"></textarea>
+        </div>
+        <div class="column">
+          <iframe
+            src="https://clinician.stagingprint.com/widget"
+            id="bp-widget"
+            width="350px"
+            height="550px"
+            allow="microphone; display-capture; clipboard-read; clipboard-write; screen-wake-lock;"
+            style="visibility: hidden;"
+          >
+          </iframe>
+        </div>
+    </div>
+
+    <script>
+      // Decode HTML entities and parse JSON string.
+      // If your application uses server-side templating you might need to do
+      // something like this so that the access token is properly transferred
+      // to the front end. If you are using a front-end framework like React,
+      // then passing the access token from the backend to your front end and
+      // then to Blueprint is more straightforward.
+      function decodeHtmlEntities(encodedString) {
+        const textArea = document.createElement('textarea');
+        textArea.innerHTML = encodedString;
+        return textArea.value;
+      }
+    </script>
+
+    <script>
+      window.addEventListener('message', event => {
+        if (event.data?.type === 'BP_CLINICIAN_NOT_AUTHENTICATED') {
+          // authenticate the clinian
+          const iframe = document.getElementById('bp-widget')
+          const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
+          const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
+
+          iframe.contentWindow.postMessage(
+            {
+              type: 'BP_AUTHENTICATE',
+              authTokens: clinicianTokens,
+              username: 'asdf'
+            },
+            '*'
+          )
+        }
+
+        // wait for Blueprint to load before providing settings and selecting a client
+        if (event.data?.type === 'BP_EXTENSION_CONTEXT_LOADED') {
+          const iframe = document.getElementById('bp-widget')
+          
+          // provide settings
+          iframe.contentWindow.postMessage(
+            {
+              type: 'BP_SETTINGS',
+              settings: {
+                isAlwaysOpen: true, // this will disable close/minimize functionality
+                copyNoteButtonText: 'Export to EHR'
+              }
+            },
+            '*'
+          )
+
+          // select the client
+          iframe.contentWindow?.postMessage(
+            {
+              type: 'BP_SELECT_CLIENT',
+              clientId: '<%= item.blueprintId %>'
+            },
+            '*'
+          )
+          
+          // show the iframe now that the clinician is authenticated and a client has been selected
+          iframe.style.visibility = 'visible';
+        }
+      })
+    </script>
+    <p>
+        <a href="/patients">Back to Patient List</a>
+    </p>
+</body>
+</html>

@@ -66,7 +66,7 @@
         const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
 
         Blueprint.authenticate(clinicianTokens, '<%= clinicianId %>');
-        Blueprint.selectClient(`<%= item.blueprintId %>`)
+        Blueprint.selectClient(`<%= item.blueprintId %>`);
         Blueprint.onCopyNoteClicked((note) => {
             // This is the signal that the user is done editing the note.
             console.log('Exporting note to EHR...');

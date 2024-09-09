@@ -85,6 +85,7 @@ app.get('/patients/:id', async (req, res) => {
   const clinicianTokens = await authResponse.json();
 
   if (patient) {
+    // render chart-with-iframe for an example on embedding the iframe without the Blueprint script
     res.render('chart', { item: patient, clinicianTokens: clinicianTokens, clinicianId: clinicianId });
   } else {
     res.status(404).send('Patient not found');

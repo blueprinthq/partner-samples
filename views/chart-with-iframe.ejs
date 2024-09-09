@@ -53,7 +53,6 @@
 
     <script>
       window.addEventListener('message', event => {
-        // wait for Blueprint to load before postMessage
         if (event.data?.type === 'BP_CLINICIAN_NOT_AUTHENTICATED') {
           // authenticate the clinian
           const iframe = document.getElementById('bp-widget')
@@ -70,6 +69,7 @@
           )
         }
 
+        // wait for Blueprint to load before providing settings and selecting a client
         if (event.data?.type === 'BP_EXTENSION_CONTEXT_LOADED') {
           const iframe = document.getElementById('bp-widget')
           

@@ -3,30 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Chart</title>
-    <style>
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .column {
-            padding: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="/styles.css" />
+    <title>My EHR - Patient Chart</title>
 </head>
 <body>
     <div class="container">
         <div class="column">
-            <h1><%= item.name %></h1>
+            <h1>My EHR Patient Chart</h1>
+            <h2><%= item.name %></h2>
             <p><strong>Age:</strong> <%= item.age %></p>
             <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
             <textarea id="progress-note" style="width: 320px; height: 240px;"></textarea>
         </div>
+        <!-- Use https://clinician.stagingprint.com/widget when developing in sandbox / staging. -->
         <div class="column">
           <iframe
-            src="https://clinician.stagingprint.com/widget"
+            src="https://clinician.blueprint-health.com/widget"
             id="bp-widget"
             width="350px"
             height="550px"

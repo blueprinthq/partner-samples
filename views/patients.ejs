@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient List</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <title>My EHR - Patient List</title>
 </head>
 <body>
-    <h1>Patient List</h1>
+    <h1>My EHR Patient List</h1>
     <ul>
         <% items.forEach(item => { %>
             <li>
-                <a href="/patients/<%= item.id %>"><%= item.name %></a>
+                <a href="/patients/<%= item.id %>"><%= item.name %></a> - <%= item.age %> years old
             </li>
         <% }) %>
     </ul>

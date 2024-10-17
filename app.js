@@ -67,7 +67,6 @@ app.get('/patients/:id', async (req, res) => {
   // Automatically authenticate the clinician.
   // In this example the EHR is storing the Blueprint id for the clinician.
   const clinicianId = process.env.BLUEPRINT_CLINICIAN_ID;
-  const clinicianEmail = process.env.EHR_CLINICIAN_EMAIL;
 
   const authResponse = await fetch(
     `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
@@ -78,7 +77,7 @@ app.get('/patients/:id', async (req, res) => {
         'Access-Token': accessToken,
         'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
       },
-      body: JSON.stringify({ email: clinicianEmail }),
+      body: JSON.stringify(),
     }
   )
 

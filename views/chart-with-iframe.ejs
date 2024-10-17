@@ -15,10 +15,9 @@
             <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
             <textarea id="progress-note" style="width: 320px; height: 240px;"></textarea>
         </div>
-        <!-- Use https://clinician.stagingprint.com/widget when developing in sandbox / staging. -->
         <div class="column">
           <iframe
-            src="https://clinician.blueprint-health.com/widget"
+            src="<%= process.env.BLUEPRINT_IFRAME_URL %>"
             id="bp-widget"
             width="350px"
             height="550px"

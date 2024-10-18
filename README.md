@@ -6,16 +6,20 @@ Blueprint Partner API v2 to integrate Blueprint into your application.
 ## Getting Started
 
 1. Clone the repository.
-2. Run `npm install` to install the dependencies.
-3. Create an `.env` file based on the sample. `cp .env.sample .env`
-4. Update the values in the `.env` file with your Blueprint Partner API v2 credentials.
-5. Run `npm start` to start the application.
+2. Make sure you have `node` and `npm` installed. This sample application has been built and tested with Node.js v20.
+3. Run `npm install` to install the dependencies.
+4. Create an `.env-cmdrc.json` file based on the sample. `cp .env-cmdrc.json.sample .env-cmdrc.json`
+5. Update the API secret values in the `.env-cmdrc.json` file with your Blueprint Partner API v2 credentials.
+7. Run `npm start:staging` to start the application using the Blueprint Partner API v2 sandbox environment.
+8. Run `npm start:production` to start the application using the Blueprint Partner API v2 production environment.
+
+This application will load sample EHR from from JSON files in the `data` directory, in the format
+`data/patients.[staging|production].json`. You can update these files with patients that match the
+clients in the Blueprint clinic that you are connecting your partner application to.
 
 Review Blueprint Partner API v2 documentation at
 [https://api-v2-docs.blueprint-health.com](https://api-v2-docs.blueprint-health.com) for more information
 and API reference.
-
-This sample application has been built and tested with Node.js v20.
 
 ## Developer Notes
 

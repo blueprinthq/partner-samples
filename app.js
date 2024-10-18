@@ -16,8 +16,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Set up sample data that represents what is in the EHR database.
-// In this example, the EHR is also storing the blueprintId for each patient.
-const patients = JSON.parse(fs.readFileSync('data/patients.json'));
+// In this example, the EHR is also storing the Blueprint id for each patient.
+// In a real naturally this patient data would come from the EHR database.
+const patients = JSON.parse(fs.readFileSync(`data/patients.${process.env.ENVIRONMENT}.json`));
 
 // Login page
 app.get('/login', (req, res) => {
@@ -36,7 +37,7 @@ app.post('/login', (req, res) => {
   }
 });
 
-// Patients page
+// Patients list
 app.get('/patients', (req, res) => {
   res.render('patients', { items: patients });
 });
@@ -46,7 +47,7 @@ app.get('/patients/:id', async (req, res) => {
   const patientId = parseInt(req.params.id);
   const patient = patients.find(p => p.id === patientId);
 
-  // Authenticate with the Blueprint server-to-server API.
+  // Authenticate with the Blueprint server-to-server API using your partner API credentials.
   const tokenResponse = await fetch(
     `${process.env.BLUEPRINT_API_URL}/partners/authenticate`,
     {
@@ -66,8 +67,9 @@ app.get('/patients/:id', async (req, res) => {
 
   // Automatically authenticate the clinician.
   // In this example the EHR is storing the Blueprint id for the clinician.
+  // As long as this clinician id is part of a clinic and organization that
+  // these partner credentials have access to, this is all that is required.
   const clinicianId = process.env.BLUEPRINT_CLINICIAN_ID;
-  const clinicianEmail = process.env.EHR_CLINICIAN_EMAIL;
 
   const authResponse = await fetch(
     `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
@@ -78,23 +80,23 @@ app.get('/patients/:id', async (req, res) => {
         'Access-Token': accessToken,
         'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
       },
-      body: JSON.stringify({ email: clinicianEmail }),
+      body: JSON.stringify(),
     }
   )
 
   const clinicianTokens = await authResponse.json();
 
   if (patient) {
-    // render chart-with-iframe for an example on embedding the iframe without the Blueprint script
+    // Render "chart-with-iframe" instead for an example of embedding as an IFRAME without the Blueprint script.
     res.render('chart', { item: patient, clinicianTokens: clinicianTokens, clinicianId: clinicianId });
   } else {
     res.status(404).send('Patient not found');
   }
 });
 
-// Note Generated webhook
+// This is an example implementation of a webhook listener for events fired from the Blueprint API.
 app.post('/note', async (req, res) => {
-  // Verify X-Blueprint-Signature
+  // Verify X-Blueprint-Signature.
   const hmac = crypto.createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET);
   hmac.update(req.body);
   const signature = hmac.digest('hex');
@@ -102,6 +104,7 @@ app.post('/note', async (req, res) => {
   if (req.headers['X-Blueprint-Signature'] !== signature)
     return res.status(401).send('Invalid signature');
 
+  // Commented out below are other fields in the webhook payload that may be useful.
   const {
     // progressNoteId,
     // sessionId,
@@ -112,6 +115,7 @@ app.post('/note', async (req, res) => {
     progressNoteUrl,
   } = req.body;
 
+  // Given the progressNoteUrl, fetch the note content.
   const noteResponse = await fetch(progressNoteUrl, {
     method: 'GET',
     headers: {
@@ -121,6 +125,7 @@ app.post('/note', async (req, res) => {
     },
   })
 
+  // Commented out below are other fields in the note response that may be useful.
   const {
     // id,
     // sessionId,
@@ -137,7 +142,7 @@ app.post('/note', async (req, res) => {
   res.send();
 });
 
-// Start the application.
+// Start the sample EHR application.
 app.listen(port, () => {
   console.log(`Sample EHR is running on http://localhost:${port}`);
 });

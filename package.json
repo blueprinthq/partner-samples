@@ -5,12 +5,15 @@
   "author": "Blueprint",
   "main": "app.js",
   "scripts": {
-    "start": "node app"
+    "start": "env-cmd -e local node app",
+    "start:staging": "env-cmd -e staging node app",
+    "start:production": "env-cmd -e production node app"
   },
   "dependencies": {
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
+    "env-cmd": "^10.1.0",
     "express": "^4.19.2",
     "node-fetch": "^2.6.1"
   }

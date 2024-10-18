@@ -15,10 +15,9 @@
             <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
             <textarea id="progress-note" style="width: 320px; height: 240px;"></textarea>
         </div>
-        <!-- Use https://clinician.stagingprint.com/widget when developing in sandbox / staging. -->
         <div class="column">
           <iframe
-            src="https://clinician.blueprint-health.com/widget"
+            src="<%= process.env.BLUEPRINT_IFRAME_URL %>"
             id="bp-widget"
             width="350px"
             height="550px"
@@ -46,7 +45,7 @@
     <script>
       window.addEventListener('message', event => {
         if (event.data?.type === 'BP_CLINICIAN_NOT_AUTHENTICATED') {
-          // authenticate the clinian
+          // Automatically authenticate the clinian.
           const iframe = document.getElementById('bp-widget')
           const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
           const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
@@ -61,25 +60,25 @@
           )
         }
 
-        // wait for Blueprint to load before providing settings and selecting a client
+        // Wait for the Blueprint frame to load before providing settings and selecting a client.
         if (event.data?.type === 'BP_EXTENSION_CONTEXT_LOADED') {
           const iframe = document.getElementById('bp-widget')
           
-          // provide settings
+          // Provide settings.
           iframe.contentWindow.postMessage(
             {
               type: 'BP_SETTINGS',
               settings: {
-                isAlwaysOpen: true, // this will disable close/minimize functionality
-                copyNoteButtonText: 'Export to EHR',
-                patientReference: 'Patient',
-                hideTreatmentPlan: true
+                isAlwaysOpen: true, // This disables close/minimize functionality.
+                copyNoteButtonText: 'Export to EHR', // Default is "Copy Note"
+                patientReference: 'Patient', // Default is "Client"
+                hideTreatmentPlan: true // Default is false
               }
             },
             '*'
           )
 
-          // select the client
+          // Select the client.
           iframe.contentWindow?.postMessage(
             {
               type: 'BP_SELECT_CLIENT',
@@ -88,7 +87,7 @@
             '*'
           )
           
-          // show the iframe now that the clinician is authenticated and a client has been selected
+          // Show the Blueprint frame now that the clinician is authenticated and a client has been selected.
           iframe.style.visibility = 'visible';
         }
       })

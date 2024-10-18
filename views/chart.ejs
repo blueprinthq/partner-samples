@@ -24,21 +24,22 @@
     <script>
         window.blueprintSettings = {
           containerId: 'blueprint-container',
-          // And you can customize the "Copy" button.
-          copyNoteButtonText: 'Export to EHR'
+          // Customize common settings.
+          copyNoteButtonText: 'Export to EHR', // Default is "Copy Note"
+          // patientReference: 'Patient', // Default is "Client"
+          // hideTreatmentPlan: true, // Default is false
           // And set other settings...
           // position: 'bottom-left',
           // openButtonIcon: '',
           // closeButtonIcon: '',
           // buttonColor: '#2D54E8',
           // isDraggable: false,
-          // isAlwaysOpen: true
+          // isAlwaysOpen: true,
           // width: '580px',
           // height: '380px',
         }
     </script>
-    <!-- Use https://embed.stagingprint.com/index.min.js when developing in sandbox / staging. -->
-    <script src="https://embed.blueprint-health.com/index.min.js"></script>
+    <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
 
     <!-- With a little extra code you can select a client. -->
     <script>

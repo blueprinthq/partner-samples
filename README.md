@@ -10,8 +10,8 @@ Blueprint Partner API v2 to integrate Blueprint into your application.
 3. Run `npm install` to install the dependencies.
 4. Create an `.env-cmdrc.json` file based on the sample. `cp .env-cmdrc.json.sample .env-cmdrc.json`
 5. Update the API secret values in the `.env-cmdrc.json` file with your Blueprint Partner API v2 credentials.
-7. Run `npm start:staging` to start the application using the Blueprrint Partner API v2 sandbox environment.
-8. Run `npm start:staging` to start the application using the Blueprrint Partner API v2 production environment.
+7. Run `npm start:staging` to start the application using the Blueprint Partner API v2 sandbox environment.
+8. Run `npm start:production` to start the application using the Blueprint Partner API v2 production environment.
 
 Review Blueprint Partner API v2 documentation at
 [https://api-v2-docs.blueprint-health.com](https://api-v2-docs.blueprint-health.com) for more information

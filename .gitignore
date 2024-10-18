@@ -4,3 +4,4 @@ node_modules/
 .env.staging
 .env.production
 .env-cmdrc.json
+data/patients.local.json

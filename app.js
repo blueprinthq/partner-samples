@@ -17,7 +17,8 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Set up sample data that represents what is in the EHR database.
 // In this example, the EHR is also storing the Blueprint id for each patient.
-const patients = JSON.parse(fs.readFileSync('data/patients.json'));
+// In a real naturally this patient data would come from the EHR database.
+const patients = JSON.parse(fs.readFileSync(`data/patients.${process.env.ENVIRONMENT}.json`));
 
 // Login page
 app.get('/login', (req, res) => {

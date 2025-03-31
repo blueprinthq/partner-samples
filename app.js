@@ -44,7 +44,7 @@ app.get('/patients', (req, res) => {
 
 // Patient chart
 app.get('/patients/:id', async (req, res) => {
-  const patientId = parseInt(req.params.id);
+  const patientId = req.params.id;
   const patient = patients.find(p => p.id === patientId);
 
   // Authenticate with the Blueprint server-to-server API using your partner API credentials.

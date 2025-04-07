@@ -65,8 +65,8 @@ app.get('/patients/:id', async (req, res) => {
   );
 
   if (!tokenResponse.ok) {
-    console.error('Error fetching access token:', await tokenResponse.text());
-    return res.status(500).send('Error fetching access token');
+    console.error('Error getting partner access token: ', await tokenResponse.text());
+    return res.status(500).send('Error getting partner access token');
   }
 
   const { accessToken } = await tokenResponse.json();
@@ -77,21 +77,28 @@ app.get('/patients/:id', async (req, res) => {
   // these partner credentials have access to, this is all that is required.
   // TODO Look up the clinician id via endpoint by using email or EHR identifier.
   const clinicianId = process.env.BLUEPRINT_CLINICIAN_ID;
-  // const clinicianResponse = await fetch(
-  //   `${process.env.BLUEPRINT_API_URL}/clinicians?email=${process.env.EHR_CLINICIAN_EMAIL}`,
-  //   {
-  //     method: 'GET',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'Access-Token': accessToken,
-  //       'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
-  //     },
-  //     body: JSON.stringify(),
-  //   }
-  // );
+  /*
+  const clinicianResponse = await fetch(
+    `${process.env.BLUEPRINT_API_URL}/clinicians?email=${process.env.EHR_CLINICIAN_EMAIL}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Token': accessToken,
+        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+      },
+      body: JSON.stringify(),
+    }
+  );
 
-  // const clinicianData = await clinicianResponse.json();
+  if (!clinicianResponse.ok) {
+    console.error('Error getting clinician id: ', await clinicianResponse.text());
+    return res.status(500).send('Error getting clincian id');
+  }
+
+  const clinicianData = await clinicianResponse.json();
   // TODO Parse clinicianData to get the clinicianId.
+  */
 
   const authResponse = await fetch(
     `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
@@ -106,8 +113,14 @@ app.get('/patients/:id', async (req, res) => {
     }
   );
 
+  if (!authResponse.ok) {
+    console.error('Error authenticating: ', await authResponse.text());
+    return res.status(500).send('Error authenticating clinician');
+  }
+
   const clinicianTokens = await authResponse.json();
 
+  // Render the patient chart with the selected patient and clinician information.
   if (patient) {
     let pageTemplate = 'chart';
 
@@ -123,6 +136,7 @@ app.get('/patients/:id', async (req, res) => {
     }
 
     // The patient object in this example is expected to have the Blueprint id.
+    // The clinicianTokens and clinicianId values are not used by the chart-ui-only template.
     res.render(pageTemplate, { item: patient, clinicianTokens: clinicianTokens, clinicianId: clinicianId });
   } else {
     res.status(404).send('Patient not found');

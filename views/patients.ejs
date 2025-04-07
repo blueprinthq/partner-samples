@@ -12,7 +12,7 @@
         <% items.forEach(item => { %>
             <li>
                 <div>
-                    <a href="/patients/<%= item.id %>"><%= item.name %></a> - <%= item.age %> years old
+                    <a href="/patients/<%= item.id %>"><%= item.name %></a> - <%= item.age %> years old (embedded UI using backend APIs)
                     <ul>
                         <li><a href="/patients/<%= item.id %>?chartStyle=uiOnly">UI Only Version</a> (not using backend APIs)</li>
                         <li><a href="/patients/<%= item.id %>?chartStyle=iframe">IFrame Version</a> (deprecated)</li>

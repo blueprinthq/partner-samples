@@ -18,7 +18,7 @@
         <div class="column">
           <iframe
             src="<%= process.env.BLUEPRINT_IFRAME_URL %>"
-            id="bp-widget"
+            id="blueprint-frame"
             width="350px"
             height="550px"
             allow="microphone; display-capture; clipboard-read; clipboard-write; screen-wake-lock;"
@@ -46,23 +46,26 @@
       window.addEventListener('message', event => {
         if (event.data?.type === 'BP_CLINICIAN_NOT_AUTHENTICATED') {
           // Automatically authenticate the clinian.
-          const iframe = document.getElementById('bp-widget')
+          const iframe = document.getElementById('blueprint-frame');
           const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
           const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
+
+          console.log('Clinician not authenticated. Authenticating now...', clinicianTokens);
 
           iframe.contentWindow.postMessage(
             {
               type: 'BP_AUTHENTICATE',
-              authTokens: clinicianTokens,
-              username: 'asdf'
+              authTokens: clinicianTokens
             },
             '*'
-          )
+          );
         }
 
         // Wait for the Blueprint frame to load before providing settings and selecting a client.
-        if (event.data?.type === 'BP_EXTENSION_CONTEXT_LOADED') {
-          const iframe = document.getElementById('bp-widget')
+        if (event.data?.type === 'BP_WIDGET_CONTEXT_LOADED') {
+          const iframe = document.getElementById('blueprint-frame');
+
+          console.log('Blueprint frame loaded. Providing settings and selecting client...');
           
           // Provide settings.
           iframe.contentWindow.postMessage(
@@ -76,7 +79,7 @@
               }
             },
             '*'
-          )
+          );
 
           // Select the client.
           iframe.contentWindow?.postMessage(
@@ -85,7 +88,7 @@
               clientId: '<%= item.blueprintId %>'
             },
             '*'
-          )
+          );
           
           // Show the Blueprint frame now that the clinician is authenticated and a client has been selected.
           iframe.style.visibility = 'visible';

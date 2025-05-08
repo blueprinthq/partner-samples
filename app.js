@@ -3,7 +3,6 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const app = express();
@@ -145,50 +144,59 @@ app.get('/patients/:id', async (req, res) => {
 
 // This is an example implementation of a webhook listener for events fired from the Blueprint API.
 app.post('/webhook-listener', async (req, res) => {
-  // Verify X-Blueprint-Signature.
-  const hmac = crypto.createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET);
-  hmac.update(req.body);
-  const signature = hmac.digest('hex');
+  // Verify X-Blueprint-Signature using modern crypto practices
+  try {
+    const hmac = crypto.createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET);
+    hmac.update(JSON.stringify(req.body));
+    const signature = hmac.digest('hex');
 
-  if (req.headers['X-Blueprint-Signature'] !== signature) {
-    return res.status(401).send('Invalid signature');
+    if (req.headers['x-blueprint-signature'] !== signature) {
+      return res.status(401).send('Invalid signature');
+    }
+
+    // Possible event types are:
+    // - progress_note_generated
+    // - progress_note_regenerated
+    // - assessment_completed
+    const eventType = req.body.eventType;
+
+    const {
+      progressNoteId,
+      sessionId,
+      clientId,
+      clinicianId,
+      clinicId,
+      organizationId,
+      progressNoteUrl,
+    } = req.body.payload;
+
+    // Given the progressNoteUrl, fetch the note content.
+    const noteResponse = await fetch(progressNoteUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Token': accessToken,
+        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+      },
+    });
+
+    if (!noteResponse.ok) {
+      throw new Error(`Failed to fetch note: ${noteResponse.status} ${noteResponse.statusText}`);
+    }
+
+    const {
+      id,
+      //sessionId, // We already captured sessionId above.
+      note, // This is an object that will have an array of sections matching the template.
+      template, // This is an object describing the note and its sections.
+      preferences, // This an oject describng the preferences used to generate the note.
+    } = await noteResponse.json();
+
+    res.send();
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    res.status(500).send('Error processing webhook');
   }
-
-  // Possible event types are:
-  // - progress_note_generated
-  // - progress_note_regenerated
-  // - assessment_completed
-  const eventType = req.body.eventType;
-
-  const {
-    progressNoteId,
-    sessionId,
-    clientId,
-    clinicianId,
-    clinicId,
-    organizationId,
-    progressNoteUrl,
-  } = req.body.payload;
-
-  // Given the progressNoteUrl, fetch the note content.
-  const noteResponse = await fetch(progressNoteUrl, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Token': accessToken,
-      'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
-    },
-  })
-
-  const {
-    id,
-    //sessionId, // We already captured sessionId above.
-    note, // This is an object that will have an array of sections matching the template.
-    template, // This is an object describing the note and its sections.
-    preferences, // This an oject describng the preferences used to generate the note.
-  } = await noteResponse.json();
-
-  res.send();
 });
 
 // Start the sample EHR application.

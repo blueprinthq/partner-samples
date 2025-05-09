@@ -4,6 +4,9 @@
   "description": "Sample application for using the Blueprint Partner API",
   "author": "Blueprint",
   "main": "app.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "start": "env-cmd -e local node app",
     "start:staging": "env-cmd -e staging node app",
@@ -14,7 +17,6 @@
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "env-cmd": "^10.1.0",
-    "express": "^4.19.2",
-    "node-fetch": "^2.6.1"
+    "express": "^4.19.2"
   }
 }

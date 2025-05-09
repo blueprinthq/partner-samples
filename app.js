@@ -74,30 +74,9 @@ app.get('/patients/:id', async (req, res) => {
   // In this example the EHR is storing the Blueprint id for the clinician.
   // As long as this clinician id is part of a clinic and organization that
   // these partner credentials have access to, this is all that is required.
-  // TODO Look up the clinician id via endpoint by using email or EHR identifier.
+  // In a real application, you would look up the clincian id via API and
+  // then likely cache it in the EHR database.
   const clinicianId = process.env.BLUEPRINT_CLINICIAN_ID;
-  /*
-  const clinicianResponse = await fetch(
-    `${process.env.BLUEPRINT_API_URL}/clinicians?email=${process.env.EHR_CLINICIAN_EMAIL}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Token': accessToken,
-        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
-      },
-      body: JSON.stringify(),
-    }
-  );
-
-  if (!clinicianResponse.ok) {
-    console.error('Error getting clinician id: ', await clinicianResponse.text());
-    return res.status(500).send('Error getting clincian id');
-  }
-
-  const clinicianData = await clinicianResponse.json();
-  // TODO Parse clinicianData to get the clinicianId.
-  */
 
   const authResponse = await fetch(
     `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
@@ -157,6 +136,7 @@ app.post('/webhook-listener', async (req, res) => {
     // Possible event types are:
     // - progress_note_generated
     // - progress_note_regenerated
+    // - progress_note_finalized
     // - assessment_completed
     const eventType = req.body.eventType;
 

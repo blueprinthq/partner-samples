@@ -40,23 +40,6 @@
     <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
 
     <script>
-        /*
-        // This is the signal that the user has requested to end the session
-        Blueprint.onEndSessionClicked(() => {
-            console.log('User requested to end the session.');
-        });
-
-        // This is the signal that the user has requested to generate a note.
-        Blueprint.onGenerateNoteClicked(() => {
-            console.log('User requested to generate a note.');
-        });
-
-        // This is the signal that the user has requests to delete the session.
-        Blueprint.onDeleteSessionClicked(() => {
-            console.log('User requested to delete the session.');
-        })
-        */
-
         // This is the signal that the user is done editing the note.
         Blueprint.onCopyNoteClicked((note) => {
             console.log('Exporting note to EHR...');

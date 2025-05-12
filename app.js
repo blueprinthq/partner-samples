@@ -106,6 +106,9 @@ app.get('/patients/:id', async (req, res) => {
       case 'uiOnly':
         pageTemplate = 'chart-ui-only';
         break;
+      case 'miniWidget':
+        pageTemplate = 'chart-mini-widget';
+        break;
       case 'iframe':
         pageTemplate = 'chart-with-iframe';
         break;

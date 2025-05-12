@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css" />
+    <title>My EHR - Patient Chart</title>
+</head>
+<body>
+    <div class="container">
+        <div class="column">
+            <h1>My EHR Patient Chart</h1>
+            <h2><%= item.name %></h2>
+            <p><strong>Age:</strong> <%= item.age %></p>
+            <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
+            <textarea id="progress-note" style="width: 320px; height: 240px;"></textarea>
+        </div>
+        <div class="column">
+            <div id="blueprint-container"></div>
+        </div>
+    </div>
+
+    <!-- Customize the embedded Blueprint user interface. -->
+    <script>
+        window.blueprintSettings = {
+            containerId: 'blueprint-container',
+            width: '250px',
+            height: '220px',
+            isMinifiedView: true,
+            minifiedViewSettings: {
+            container: {
+              borderColor: '#E4E5E6',
+              borderWidth: '1px',
+              borderRadius: '8px',
+              backgroundColor: '#3A65620A',
+            },
+            buttons: {
+              borderRadius: '5px',
+              primaryBackgroundColor: '#2D54E8',
+              primaryTextColor: '#FFFFFF',
+              secondaryBackgroundColor: '#FFFFFF',
+              secondaryTextColor: '#2D54E8',
+            },
+            inputs: {
+              borderRadius: '25px',
+            },
+            audioIndicatorColor: '#2D54E8',
+          }
+        }
+    </script>
+    <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
+
+    <!-- Automatically select a client. -->
+    <script>
+        // Decode HTML entities and parse JSON string.
+        // If your application uses server-side templating you might need to do
+        // something like this so that the access token is properly transferred
+        // to the front end. If you are using a front-end framework like React,
+        // then passing the access token from the backend to your front end and
+        // then to Blueprint is more straightforward.
+        function decodeHtmlEntities(encodedString) {
+            const textArea = document.createElement('textarea');
+            textArea.innerHTML = encodedString;
+            return textArea.value;
+        }
+
+        const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
+        const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
+
+        Blueprint.authenticate(clinicianTokens, '<%= clinicianId %>');
+        // Selecting a client requires an authenticated clinician.
+        // Upon selecting a client, a new session is created.
+        // Optional properties can be passed to initialize the session with custom data.
+        Blueprint.selectClient(`<%= item.blueprintId %>`, {
+          sessionExternalId: 'example-id', // store an external id for the session
+          sessionSetting: 'telehealth', // telehealth or in-person
+          usingHeadphones: true,
+          noteOptions: {
+            noteGroup: 'therapists', // therapists or prescribers - show note types by note group
+            sessionType: 'individual', // individual, couple, or group
+            noteType: 'dap',
+            treatmentApproaches: ['cbt', 'dbt'],
+          }
+        });
+
+        // This is the signal that the user is done editing the note.
+        Blueprint.onCopyNoteClicked((note) => {
+            console.log('Exporting note to EHR...');
+            const progressNote = document.getElementById('progress-note');
+            progressNote.value = note.note;
+        });
+    </script>
+
+    <p>
+        <a href="/patients">Back to Patient List</a>
+    </p>
+</body>
+</html>

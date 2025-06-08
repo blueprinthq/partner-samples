@@ -18,7 +18,7 @@ This application will load sample EHR from from JSON files in the `data` directo
 clients in the Blueprint clinic that you are connecting your partner application to.
 
 Review Blueprint Partner API v2 documentation at
-[https://api-v2-docs.blueprint-health.com](https://api-v2-docs.blueprint-health.com) for more information
+[https://developer.blueprint.ai](https://developer.blueprint.ai) for more information
 and API reference.
 
 ## Developer Notes

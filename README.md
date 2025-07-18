@@ -13,7 +13,7 @@ Blueprint Partner API v2 to integrate Blueprint into your application.
 7. Run `npm run start:staging` to start the application using the Blueprint Partner API v2 sandbox environment.
 8. Run `npm run start:production` to start the application using the Blueprint Partner API v2 production environment.
 
-This application will load sample EHR from from JSON files in the `data` directory, in the format
+This application will load sample EHR from JSON files in the `data` directory, in the format
 `data/patients.[staging|production].json`. You can update these files with patients that match the
 clients in the Blueprint clinic that you are connecting your partner application to.
 

@@ -1,6 +1,6 @@
 services:
   api:
-    container_name: smaple-ehr
+    container_name: sample-ehr
     build:
       context: ./
       dockerfile: Dockerfile.dev

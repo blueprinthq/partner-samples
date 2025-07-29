@@ -10,7 +10,8 @@
   "scripts": {
     "start": "env-cmd -e local node app",
     "start:staging": "env-cmd -e staging node app",
-    "start:production": "env-cmd -e production node app"
+    "start:production": "env-cmd -e production node app",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
     "body-parser": "^1.20.3",

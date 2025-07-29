@@ -9,3 +9,19 @@ services:
     volumes:
       - ./:/app
       - /app/node_modules
+    environment:
+      - NODE_ENV=local
+  
+  api-staging:
+    container_name: sample-ehr-staging
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3334:3333'
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=staging
+    command: npm run start:staging

@@ -14,13 +14,18 @@ app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Root route - redirect to login
+app.get('/', (_, res) => {
+  res.redirect('/login');
+});
+
 // Set up sample data that represents what is in the EHR database.
 // In this example, the EHR is also storing the Blueprint id for each patient.
 // In a real application this patient data would come from the EHR database.
 const patients = JSON.parse(fs.readFileSync(`data/patients.${process.env.ENVIRONMENT}.json`));
 
 // Login page
-app.get('/login', (req, res) => {
+app.get('/login', (_, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
@@ -37,7 +42,7 @@ app.post('/login', (req, res) => {
 });
 
 // Patients list
-app.get('/patients', (req, res) => {
+app.get('/patients', (_, res) => {
   res.render('patients', { items: patients });
 });
 

@@ -11,6 +11,8 @@ WORKDIR /usr/src/app
 # Copy the the source files into the image.
 COPY . .
 
+COPY .ecs_deploy/docker-entrypoint.sh /usr/local/bin/
+
 RUN npm ci
 
 RUN chown -R node . \

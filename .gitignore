@@ -4,3 +4,4 @@ config.ini
 data/patients.local.*
 data/patients.staging.*
 data/patients.production.*
+.DS_Store

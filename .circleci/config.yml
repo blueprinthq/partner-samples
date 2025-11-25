@@ -120,7 +120,7 @@ workflows:
           task_definition_family: 'bph-staging-partner-samples'
           requires:
             - build-and-push-image-staging
-          filters:
-            branches:
-              only:
-                - staging
+          # filters:
+          #   branches:
+          #     only:
+          #       - staging

@@ -11,7 +11,7 @@
     "start:dev": "env-cmd -e local node app",
     "start:staging": "env-cmd -e staging node app",
     "start:production": "env-cmd -e production node app",
-    "start": "env-cmd node app",
+    "start": "env-cmd -e $ENVIRONMENT node app",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {

@@ -52,7 +52,7 @@ app.get('/patients', (_, res) => {
 
 // Patient chart
 app.get('/patients/:id', async (req, res) => {
-  const patientId = req.params.id; // This is the alphanumeric id of the patient in the EHR.
+  const patientId = Number(req.params.id); // This is the alphanumeric id of the patient in the EHR.
   const patient = patients.find(p => p.id === patientId);
   const chartStyle = req.query.chartStyle;
 

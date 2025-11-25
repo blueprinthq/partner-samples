@@ -108,10 +108,10 @@ workflows:
           image_repo: 'service-images-staging/partner-samples'
           role_arn: 'arn:aws:iam::362185456514:role/bph-staging-partner-samples-circle-ci-pipeline'
           push_image: true
-          filters:
-            branches:
-              only:
-                - staging
+          # filters:
+          #   branches:
+          #     only:
+          #       - staging
       - deploy-service:
           name: deploy-service-staging
           context: blueprint-staging-oidc

@@ -10,4 +10,8 @@ echo "Downloading patient data from: s3://$SAMPLE_FILE_BUCKET/patients.$ENVIRONM
 
 aws s3 cp "s3://$SAMPLE_FILE_BUCKET/patients.$ENVIRONMENT.json" "data/patients.$ENVIRONMENT.json"
 
+echo "Current directory: $(pwd)"
+
+ls -l data
+
 exec "$@"

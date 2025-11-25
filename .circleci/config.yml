@@ -115,7 +115,7 @@ workflows:
       - deploy-service:
           name: deploy-service-staging
           context: blueprint-staging-oidc
-          role_arn: 'arn:aws:iam::362185456514:role/bph-staging-deploy-bot-circle-ci-pipeline'
+          role_arn: 'arn:aws:iam::362185456514:role/bph-staging-partner-samples-circle-ci-pipeline'
           cluster: 'bph-staging-partner-samples'
           task_definition_family: 'bph-staging-partner-samples'
           requires:

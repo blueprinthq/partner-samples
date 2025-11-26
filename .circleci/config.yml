@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@5.4.1
-  aws-ecr: circleci/aws-ecr@9.7.0
+  aws-ecr: circleci/aws-ecr@9.8.0
   aws-ecs: circleci/aws-ecs@7.2.0
 
 jobs:
@@ -86,8 +86,8 @@ workflows:
     jobs:
       - build-image:
           context: blueprint-staging-oidc
-          image_repo: 'service-images-staging/partner-samples'
-          role_arn: 'arn:aws:iam::362185456514:role/bph-staging-partner-samples-circle-ci-pipeline'
+          image_repo: ${STAGING_ECR_REPO}
+          role_arn: ${STAGING_ROLE_ARN}
           push_image: false
           filters:
             branches:
@@ -105,8 +105,8 @@ workflows:
       - build-image:
           name: build-and-push-image-staging
           context: blueprint-staging-oidc
-          image_repo: 'service-images-staging/partner-samples'
-          role_arn: 'arn:aws:iam::362185456514:role/bph-staging-partner-samples-circle-ci-pipeline'
+          image_repo: ${STAGING_ECR_REPO}
+          role_arn: ${STAGING_ROLE_ARN}
           push_image: true
           filters:
             branches:
@@ -115,9 +115,9 @@ workflows:
       - deploy-service:
           name: deploy-service-staging
           context: blueprint-staging-oidc
-          role_arn: 'arn:aws:iam::362185456514:role/bph-staging-partner-samples-circle-ci-pipeline'
-          cluster: 'bph-staging-partner-samples'
-          task_definition_family: 'bph-staging-partner-samples'
+          role_arn: ${STAGING_ROLE_ARN}
+          cluster: ${STAGING_CLUSTER}
+          task_definition_family: ${STAGING_TASK_FAMILY}
           requires:
             - build-and-push-image-staging
           filters:
@@ -129,8 +129,8 @@ workflows:
       - build-image:
           name: build-and-push-image-production
           context: blueprint-production-oidc
-          image_repo: 'service-images-production/partner-samples'
-          role_arn: 'arn:aws:iam::362185456514:role/bph-production-partne-ebbdd-circle-ci-pipeline'
+          image_repo: ${PRODUCTION_ECR_REPO}
+          role_arn: ${PRODUCTION_ROLE_ARN}
           push_image: true
           filters:
             branches:
@@ -139,9 +139,9 @@ workflows:
       - deploy-service:
           name: deploy-service-production
           context: blueprint-production-oidc
-          role_arn: 'arn:aws:iam::362185456514:role/bph-production-partne-ebbdd-circle-ci-pipeline'
-          cluster: 'bph-production-partne-ebbdd'
-          task_definition_family: 'bph-production-partne-ebbdd'
+          role_arn: ${PRODUCTION_ROLE_ARN}
+          cluster: ${PRODUCTION_CLUSTER}
+          task_definition_family: ${PRODUCTION_TASK_FAMILY}
           requires:
             - build-and-push-image-production
           filters:

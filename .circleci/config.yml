@@ -108,10 +108,10 @@ workflows:
           image_repo: 'service-images-staging/partner-samples'
           role_arn: 'arn:aws:iam::362185456514:role/bph-staging-partner-samples-circle-ci-pipeline'
           push_image: true
-          # filters:
-          #   branches:
-          #     only:
-          #       - staging
+          filters:
+            branches:
+              only:
+                - staging
       - deploy-service:
           name: deploy-service-staging
           context: blueprint-staging-oidc
@@ -120,7 +120,31 @@ workflows:
           task_definition_family: 'bph-staging-partner-samples'
           requires:
             - build-and-push-image-staging
-          # filters:
-          #   branches:
-          #     only:
-          #       - staging
+          filters:
+            branches:
+              only:
+                - staging
+  deploy-production:
+    jobs:
+      - build-image:
+          name: build-and-push-image-production
+          context: blueprint-production-oidc
+          image_repo: 'service-images-production/partner-samples'
+          role_arn: 'arn:aws:iam::362185456514:role/bph-production-partne-ebbdd-circle-ci-pipeline'
+          push_image: true
+          filters:
+            branches:
+              only:
+                - production
+      - deploy-service:
+          name: deploy-service-production
+          context: blueprint-production-oidc
+          role_arn: 'arn:aws:iam::362185456514:role/bph-production-partne-ebbdd-circle-ci-pipeline'
+          cluster: 'bph-production-partne-ebbdd'
+          task_definition_family: 'bph-production-partne-ebbdd'
+          requires:
+            - build-and-push-image-production
+          filters:
+            branches:
+              only:
+                - production

@@ -24,6 +24,10 @@ app.get('/', (_, res) => {
 // In a real application this patient data would come from the EHR database.
 const patients = JSON.parse(fs.readFileSync(`data/patients.${process.env.ENVIRONMENT}.json`));
 
+app.get('/health', (_, res) => {
+  res.send('OK');
+});
+
 // Login page
 app.get('/login', (_, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -31,7 +35,7 @@ app.get('/login', (_, res) => {
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  
+
   // Note that this sample password does not match the Blueprint password for this clinician.
   // This is intended to be the EHR password for this user.
   if (username === process.env.EHR_CLINICIAN_EMAIL && password === process.env.EHR_CLINICIAN_PASSWORD) {
@@ -48,7 +52,7 @@ app.get('/patients', (_, res) => {
 
 // Patient chart
 app.get('/patients/:id', async (req, res) => {
-  const patientId = req.params.id; // This is the alphanumeric id of the patient in the EHR.
+  const patientId = Number(req.params.id); // This is the alphanumeric id of the patient in the EHR.
   const patient = patients.find(p => p.id === patientId);
   const chartStyle = req.query.chartStyle;
 

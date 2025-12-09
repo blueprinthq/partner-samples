@@ -1,16 +1,150 @@
 version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@5.4.1
+  aws-ecr: circleci/aws-ecr@9.8.0
+  aws-ecs: circleci/aws-ecs@7.2.0
 
 jobs:
-  test:
+  run-tests:
     docker:
       - image: cimg/node:22.0
     steps:
       - checkout
-      - run: npm install
-      - run: npm test
+      - restore_cache:
+          key: v1-deps-{{ checksum "package-lock.json" }}
+      - run:
+          name: Installing node modules
+          command: npm install
+      - save_cache:
+          key: v1-deps-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+      - run: npm test -- --runInBand --ci --reporters=default --reporters=jest-junit
+      - store_test_results:
+          path: ./reports/
+      - store_artifacts:
+          path: ./reports/
+  build-image:
+    parameters:
+      image_repo:
+        type: string
+      role_arn:
+        type: string
+      push_image:
+        type: boolean
+        default: false
+    docker:
+      - image: cimg/base:current
+        environment:
+          DOCKER_BUILDKIT: 1
+    resource_class: 'arm.medium'
+    steps:
+      - checkout
+      - aws-ecr/build_and_push_image:
+          checkout: false
+          setup_remote_docker: true
+          remote_docker_layer_caching: true
+          auth:
+            - aws-cli/setup:
+                profile_name: 'oidc_profile'
+                role_arn: <<parameters.role_arn>>
+          build_path: .
+          path: .ecs_deploy
+          repo: <<parameters.image_repo>>
+          tag: '${CIRCLE_SHA1},latest'
+          profile_name: 'oidc_profile'
+          use_credentials_helper: false
+          platform: 'linux/arm64'
+          push_image: <<parameters.push_image>>
+          extra_build_args: '--provenance=false'
+  deploy-service:
+    parameters:
+      role_arn:
+        type: string
+      cluster:
+        type: string
+      task_definition_family:
+        type: string
+    docker:
+      - image: cimg/base:current
+    steps:
+      - aws-cli/setup:
+          profile_name: 'oidc_profile'
+          role_arn: <<parameters.role_arn>>
+      - aws-ecs/update_service:
+          cluster: <<parameters.cluster>>
+          container_image_name_updates: container=partner-samples,tag=${CIRCLE_SHA1}
+          family: <<parameters.task_definition_family>>
+          profile_name: 'oidc_profile'
+          service_name: 'partner-samples'
+          verify_revision_is_deployed: true
+          poll_interval: 20
+          max_poll_attempts: 50
 
 workflows:
-  version: 2
-  test:
+  build:
     jobs:
-      - test 
+      - build-image:
+          context: blueprint-staging-oidc
+          image_repo: ${STAGING_ECR_REPO}
+          role_arn: ${STAGING_ROLE_ARN}
+          push_image: false
+          filters:
+            branches:
+              ignore:
+                - staging
+                - production
+      - run-tests:
+          filters:
+            branches:
+              ignore:
+                - staging
+                - production
+  deploy-staging:
+    jobs:
+      - build-image:
+          name: build-and-push-image-staging
+          context: blueprint-staging-oidc
+          image_repo: ${STAGING_ECR_REPO}
+          role_arn: ${STAGING_ROLE_ARN}
+          push_image: true
+          filters:
+            branches:
+              only:
+                - staging
+      - deploy-service:
+          name: deploy-service-staging
+          context: blueprint-staging-oidc
+          role_arn: ${STAGING_ROLE_ARN}
+          cluster: ${STAGING_CLUSTER}
+          task_definition_family: ${STAGING_TASK_FAMILY}
+          requires:
+            - build-and-push-image-staging
+          filters:
+            branches:
+              only:
+                - staging
+  deploy-production:
+    jobs:
+      - build-image:
+          name: build-and-push-image-production
+          context: blueprint-production-oidc
+          image_repo: ${PRODUCTION_ECR_REPO}
+          role_arn: ${PRODUCTION_ROLE_ARN}
+          push_image: true
+          filters:
+            branches:
+              only:
+                - production
+      - deploy-service:
+          name: deploy-service-production
+          context: blueprint-production-oidc
+          role_arn: ${PRODUCTION_ROLE_ARN}
+          cluster: ${PRODUCTION_CLUSTER}
+          task_definition_family: ${PRODUCTION_TASK_FAMILY}
+          requires:
+            - build-and-push-image-production
+          filters:
+            branches:
+              only:
+                - production

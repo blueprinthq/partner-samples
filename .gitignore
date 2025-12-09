@@ -1,6 +1,7 @@
 node_modules/
-.env-cmdrc.json
+.env-cmdrc*
 config.ini
 data/patients.local.*
 data/patients.staging.*
 data/patients.production.*
+.DS_Store

@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 
   const csp = [
     // `default-src 'self'`,
-    `script-src 'self' 'nonce-bp-test-nonce' ${scriptOrigins}`.trim(),
+    `script-src 'self' ${scriptOrigins}`.trim(),
     // `style-src 'self' 'unsafe-inline'`,
     `frame-src ${frameOrigins || "'none'"}`.trim(),
     // `img-src 'self'`,

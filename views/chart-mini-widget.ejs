@@ -21,8 +21,9 @@
     </div>
 
     <!-- Customize the embedded Blueprint user interface. -->
-    <script>
+    <script nonce="bp-test-nonce">
         window.blueprintSettings = {
+          cspNonce: 'bp-test-nonce',
           isMiniWidgetV2: true,
           containerId: 'blueprint-container',
           width: '250px',
@@ -50,10 +51,10 @@
           }
         }
     </script>
-    <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
+    <script nonce="bp-test-nonce" src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
 
     <!-- Automatically select a client. -->
-    <script>
+    <script nonce="bp-test-nonce">
         // Decode HTML entities and parse JSON string.
         // If your application uses server-side templating you might need to do
         // something like this so that the access token is properly transferred

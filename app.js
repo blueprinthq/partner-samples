@@ -14,6 +14,27 @@ app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Content Security Policy middleware.
+// CSP_SCRIPT_ORIGINS: space-separated origins allowed to load the embed script.
+// CSP_FRAME_ORIGINS: space-separated origins allowed for iframes (widget / mini-widget).
+app.use((req, res, next) => {
+  const scriptOrigins = process.env.CSP_SCRIPT_ORIGINS || '';
+  const frameOrigins = process.env.CSP_FRAME_ORIGINS || '';
+
+  const csp = [
+    // `default-src 'self'`,
+    `script-src 'self' 'unsafe-inline' ${scriptOrigins}`.trim(),
+    // `style-src 'self' 'unsafe-inline'`,
+    `frame-src ${frameOrigins || "'none'"}`.trim(),
+    // `img-src 'self'`,
+    // `connect-src 'self'`,
+    // `form-action 'self'`,
+  ].join('; ');
+
+  res.setHeader('Content-Security-Policy', csp);
+  next();
+});
+
 // Root route - redirect to login
 app.get('/', (_, res) => {
   res.redirect('/login');

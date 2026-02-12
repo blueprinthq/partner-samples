@@ -21,7 +21,7 @@
     </div>
 
     <!-- Customize the embedded Blueprint user interface. -->
-    <script>
+    <script nonce="test">
         window.blueprintSettings = {
           isMiniWidgetV2: true,
           containerId: 'blueprint-container',
@@ -50,10 +50,10 @@
           }
         }
     </script>
-    <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
+    <script nonce="test" src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
 
     <!-- Automatically select a client. -->
-    <script>
+    <script nonce="test">
         // Decode HTML entities and parse JSON string.
         // If your application uses server-side templating you might need to do
         // something like this so that the access token is properly transferred

@@ -21,7 +21,7 @@
     </div>
 
     <!-- Customize the embedded Blueprint user interface. -->
-    <script>
+    <script nonce="test">
         window.blueprintSettings = {
             containerId: 'blueprint-container',
             copyNoteButtonText: 'Export to EHR', // Default is "Copy Note"
@@ -38,9 +38,9 @@
             cspNonce: 'test'
         }
     </script>
-    <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
+    <script nonce="test" src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
 
-    <script>
+    <script nonce="test">
         // This is the signal that the user is done editing the note.
         Blueprint.onCopyNoteClicked((note) => {
             console.log('Exporting note to EHR...');

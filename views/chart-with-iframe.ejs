@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="test">
       // Decode HTML entities and parse JSON string.
       // If your application uses server-side templating you might need to do
       // something like this so that the access token is properly transferred
@@ -42,7 +42,7 @@
       }
     </script>
 
-    <script>
+    <script nonce="test">
       window.addEventListener('message', event => {
         if (event.data?.type === 'BP_CLINICIAN_NOT_AUTHENTICATED') {
           // Automatically authenticate the clinian.

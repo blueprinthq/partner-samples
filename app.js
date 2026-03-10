@@ -24,7 +24,7 @@ app.use((req, res, next) => {
   const csp = [
     // `default-src 'self'`,
     `script-src 'self' 'nonce-test' ${scriptOrigins}`.trim(),
-    // `style-src 'self' 'unsafe-inline'`,
+    `style-src 'self' 'nonce-test' ${scriptOrigins}`.trim(),
     `frame-src ${frameOrigins || "'none'"}`.trim(),
     // `img-src 'self'`,
     // `connect-src 'self'`,

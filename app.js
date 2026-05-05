@@ -133,6 +133,67 @@ app.get('/patients/:id', async (req, res) => {
   }
 });
 
+// Switch clinician test page.
+// This view is used to verify that the Blueprint widget reinitializes
+// correctly when the host page calls Blueprint.logout() and then
+// authenticates again as a different clinician.
+app.get('/switch-clinician', (_, res) => {
+  res.render('switch-clinician');
+});
+
+app.post('/switch-clinician', async (req, res) => {
+  const { clinicianId } = req.body;
+
+  if (!clinicianId) {
+    return res.status(400).json({ error: 'clinicianId is required' });
+  }
+
+  // Authenticate with the Blueprint server-to-server API using your partner API credentials.
+  const tokenResponse = await fetch(
+    `${process.env.BLUEPRINT_API_URL}/partners/authenticate`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+      },
+      body: JSON.stringify({
+        clientId: process.env.BLUEPRINT_API_CLIENT_ID,
+        clientSecret: process.env.BLUEPRINT_API_CLIENT_SECRET,
+      }),
+    }
+  );
+
+  if (!tokenResponse.ok) {
+    console.error('Error getting partner access token: ', await tokenResponse.text());
+    return res.status(500).json({ error: 'Error getting partner access token' });
+  }
+
+  const { accessToken } = await tokenResponse.json();
+
+  // Authenticate the clinician using the id provided in the form.
+  const authResponse = await fetch(
+    `${process.env.BLUEPRINT_API_URL}/clinicians/${clinicianId}/authenticate`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Token': accessToken,
+        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+      },
+      body: JSON.stringify(),
+    }
+  );
+
+  if (!authResponse.ok) {
+    console.error('Error authenticating: ', await authResponse.text());
+    return res.status(500).json({ error: 'Error authenticating clinician' });
+  }
+
+  const clinicianTokens = await authResponse.json();
+  res.json({ clinicianTokens });
+});
+
 // This is an example implementation of a webhook listener for events fired from the Blueprint API.
   app.post('/webhook-listener', async (req, res) => {
     // Verify X-Blueprint-Signature using modern crypto practices

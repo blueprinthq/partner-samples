@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css" />
+    <title>My EHR - Switch Clinician Test</title>
+</head>
+<body>
+    <div class="container">
+        <div class="column">
+            <h1>Switch Clinician Test</h1>
+            <p>
+                Enter a clinician id and a patient (client) id, then click
+                "Switch clinician". The page will authenticate as that clinician
+                and select the given client. Submit the form again with a different
+                clinician id to verify that the widget reinitializes with that
+                clinician's client list after Blueprint.logout().
+            </p>
+            <form id="switch-form">
+                <div>
+                    <label for="clinicianId">Clinician id</label><br/>
+                    <input type="text" id="clinicianId" name="clinicianId" required style="width: 320px;" />
+                </div>
+                <div style="margin-top: 10px;">
+                    <label for="patientId">Patient id (Blueprint client id)</label><br/>
+                    <input type="text" id="patientId" name="patientId" required style="width: 320px;" />
+                </div>
+                <div style="margin-top: 10px;">
+                    <button type="submit">Switch clinician</button>
+                </div>
+            </form>
+            <p id="status"></p>
+        </div>
+        <div class="column">
+            <div id="blueprint-container"></div>
+        </div>
+    </div>
+
+    <script>
+        window.blueprintSettings = {
+            containerId: 'blueprint-container',
+            copyNoteButtonText: 'Export to EHR',
+            patientReference: 'Patient',
+            position: 'bottom-left',
+            buttonColor: '#2D54E8',
+            isDraggable: false,
+            isAlwaysOpen: true,
+            width: '400px',
+            height: '600px'
+        }
+    </script>
+    <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
+
+    <script>
+        let isAuthenticated = false;
+        const form = document.getElementById('switch-form');
+        const status = document.getElementById('status');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const clinicianId = document.getElementById('clinicianId').value.trim();
+            const patientId = document.getElementById('patientId').value.trim();
+
+            if (!clinicianId || !patientId) {
+                return;
+            }
+
+            status.textContent = 'Authenticating...';
+
+            // If a clinician is already authenticated, log out and tear down
+            // the widget iframe. Blueprint.logout() does not reset the widget's
+            // internal widgetHasLoaded flag, so selectClient would post to a
+            // stale iframe and never complete. Removing #bp-widget here causes
+            // the widget's own MutationObserver to re-append a fresh iframe
+            // and the host's MutationObserver to clear widgetHasLoaded, so the
+            // selectClient call below queues and auto-fires when the new
+            // iframe finishes loading and the new clinician is authenticated.
+            if (isAuthenticated) {
+                Blueprint.logout();
+                const iframe = document.getElementById('bp-widget');
+                if (iframe) {
+                    iframe.remove();
+                }
+                isAuthenticated = false;
+            }
+
+            const response = await fetch('/switch-clinician', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clinicianId }),
+            });
+
+            if (!response.ok) {
+                status.textContent = 'Authentication failed.';
+                return;
+            }
+
+            const { clinicianTokens } = await response.json();
+
+            Blueprint.authenticate(clinicianTokens, clinicianId);
+            Blueprint.selectClient(patientId);
+            isAuthenticated = true;
+
+            status.textContent = `Authenticated as clinician ${clinicianId}; selected client ${patientId}.`;
+        });
+    </script>
+
+    <p>
+        <a href="/patients">Back to Patient List</a>
+    </p>
+</body>
+</html>

@@ -62,13 +62,13 @@
         // Optional properties can be passed to initialize the session with custom data.
         Blueprint.selectClient(`<%= item.blueprintId %>`, {
           sessionExternalId: 'example-id', // store an external id for the session
-          sessionSetting: 'telehealth', // telehealth or in-person
-          usingHeadphones: true,
+          //sessionSetting: 'telehealth', // telehealth or in-person
+          //usingHeadphones: true,
           noteOptions: {
             noteGroup: 'therapists', // therapists or prescribers - show note types by note group
             sessionType: 'individual', // individual, couple, or group
             noteType: 'soap',
-            availableNoteTypes: ['soap'],
+            availableNoteTypes: ['soap', 'dap', 'birp'],
             treatmentApproaches: [],
           }
         });

@@ -12,6 +12,7 @@ jobs:
       - checkout
       - restore_cache:
           key: v1-deps-{{ checksum "package-lock.json" }}
+      - run: npm install -g npm@11
       - run:
           name: Installing node modules
           command: npm install

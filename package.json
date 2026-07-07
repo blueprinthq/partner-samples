@@ -5,7 +5,8 @@
   "author": "Blueprint",
   "main": "app.js",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.0.0",
+    "npm": ">=11.10.0"
   },
   "scripts": {
     "start:dev": "env-cmd -e local node app",

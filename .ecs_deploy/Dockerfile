@@ -13,6 +13,7 @@ COPY . .
 
 COPY .ecs_deploy/docker-entrypoint.sh /usr/local/bin/
 
+RUN npm install -g npm@11
 RUN npm ci
 
 RUN chown -R node . \

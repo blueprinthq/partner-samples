@@ -61,6 +61,66 @@ Each environment loads patient data from corresponding JSON files in the `data` 
 
 You can update these files with patients that match the clients in the Blueprint clinic that you are connecting your partner application to.
 
+## Receiving Webhooks
+
+`POST /webhook-listener` in `app.js` is a worked example of receiving Blueprint
+webhooks. It is the most instructive route in this sample and is worth reading
+before you write your own handler.
+
+### Pointing Blueprint at your listener
+
+Blueprint delivers to a single `callbackUrl` per partner organization per
+environment. Set it once:
+
+```bash
+curl -X PATCH "$BLUEPRINT_API_URL/partners/$PARTNER_ID" \
+  -H 'Content-Type: application/json' \
+  -H "Access-Token: $ACCESS_TOKEN" \
+  -H "X-API-Key: $BLUEPRINT_API_KEY" \
+  -d '{"callbackUrl":"https://your-tunnel.example.com/webhook-listener"}'
+```
+
+Read the current value with `GET /partners`.
+
+Blueprint has to reach the URL, so `localhost` will not work while developing.
+Use a tunnel and point the sandbox `callbackUrl` at it:
+
+```bash
+ngrok http 3333        # or: cloudflared tunnel --url http://localhost:3333
+```
+
+Remember to set `callbackUrl` back when you are done.
+
+### Two things the example is careful about
+
+**Verify against the raw body.** Blueprint signs the exact bytes it transmits.
+The listener keeps a copy via body-parser's `verify` hook and HMACs that, rather
+than re-serializing the parsed body with `JSON.stringify()` — which only matches
+by luck and breaks if anything reformats the payload in transit. Comparison is
+constant-time via `crypto.timingSafeEqual`.
+
+The signing key is your **`clientSecret`**, not your API key.
+
+**Return 2xx for events you do not recognize.** Blueprint retries only on 5xx,
+408 and 429. Any other non-2xx drops the event permanently with no notification,
+so a 4xx on an unfamiliar `eventType` silently loses it. Use 5xx for genuinely
+transient failures so the delivery is retried.
+
+### Event types
+
+All seven are delivered to the same URL. Note that the payloads differ — only
+the progress note events carry `progressNoteUrl`.
+
+| Event | Resource URL in payload |
+|---|---|
+| `progress_note_generated` | `progressNoteUrl` |
+| `progress_note_regenerated` | `progressNoteUrl` |
+| `progress_note_finalized` | `progressNoteUrl` |
+| `transcript_ready` | `transcriptUrl` |
+| `mdm_elements_identified` | `mdmUrl` |
+| `session_transcript_error` | none — carries `error` |
+| `assessment_completed` | `assessmentScoreUrl` per score |
+
 ## Developer Notes
 
 This sample application demonstrates typical integration scenarios:

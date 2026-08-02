@@ -30,6 +30,40 @@ app.use(
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Content Security Policy.
+//
+// A restrictive CSP is the single most common reason the Blueprint widget
+// appears to do nothing: the loader script or its iframe gets blocked and the
+// only sign is a console error. Your application needs to allow:
+//
+//   script-src  the embed host, which serves index.min.js
+//   frame-src   BOTH widget origins -- which one is used depends on your
+//               isMinifiedView / isMiniWidgetV2 settings, and that changed for
+//               most partners in early 2026, so allow both
+//
+// Blueprint also loads fonts inside its own iframe, which is governed by
+// Blueprint's CSP rather than yours. You only need font origins here if you
+// pass your own via the `fontHref` setting.
+//
+// See https://developer.blueprint.ai for the current origins per environment.
+app.use((_req, res, next) => {
+  const scriptOrigins = process.env.CSP_SCRIPT_ORIGINS ?? '';
+  const frameOrigins = process.env.CSP_FRAME_ORIGINS ?? '';
+
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      `script-src 'self' ${scriptOrigins}`.trim(),
+      `frame-src ${frameOrigins}`.trim(),
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+    ].join('; ')
+  );
+
+  next();
+});
+
 // Exchange the partner credentials for a server-to-server access token.
 //
 // A production integration should cache this token and reuse it until shortly

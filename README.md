@@ -61,6 +61,52 @@ Each environment loads patient data from corresponding JSON files in the `data` 
 
 You can update these files with patients that match the clients in the Blueprint clinic that you are connecting your partner application to.
 
+## Content Security Policy
+
+If your application sends a CSP header, the Blueprint widget needs two
+allowances or it silently fails to appear — the loader script or its iframe is
+blocked, and the only sign is a console error.
+
+This sample sets a CSP in `app.js` from two environment variables, so you can
+see a working configuration rather than having to derive one:
+
+| Variable | Purpose |
+|---|---|
+| `CSP_SCRIPT_ORIGINS` | Host serving `index.min.js` |
+| `CSP_FRAME_ORIGINS` | Widget iframe origins |
+
+Values per environment are in `.env-cmdrc.json.sample`:
+
+```
+# staging
+CSP_SCRIPT_ORIGINS  https://embed.staging.blueprint.ai
+CSP_FRAME_ORIGINS   https://clinician.staging.blueprint.ai https://mini-widget.staging.blueprint.ai
+
+# production
+CSP_SCRIPT_ORIGINS  https://embed.blueprint.ai
+CSP_FRAME_ORIGINS   https://clinician.blueprint.ai https://mini-widget.blueprint.ai
+```
+
+**Allow both `frame-src` origins.** Which one the widget uses depends on your
+`isMinifiedView` and `isMiniWidgetV2` settings, and the default changed for most
+partners in early 2026. Allowing only the one you expect today is a latent
+break.
+
+**If you enforce `style-src` without `'unsafe-inline'`**, the loader also injects
+a stylesheet into your page and needs a nonce. Pass it with the `cspNonce`
+setting:
+
+```javascript
+window.blueprintSettings = {
+  containerId: 'blueprint-container',
+  cspNonce: 'YOUR_PER_REQUEST_NONCE'
+}
+```
+
+This sample uses `'unsafe-inline'` for `style-src` to keep the example short, so
+it does not demonstrate `cspNonce`. A production application should prefer the
+nonce.
+
 ## Receiving Webhooks
 
 `POST /webhook-listener` in `app.js` is a worked example of receiving Blueprint

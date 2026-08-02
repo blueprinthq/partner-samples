@@ -184,7 +184,7 @@ app.get('/patients/:id', async (req, res) => {
         'Access-Token': accessToken,
         'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
       },
-      body: JSON.stringify(),
+      // This endpoint takes no request body.
     }
   );
 

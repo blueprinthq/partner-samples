@@ -56,7 +56,7 @@
         const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
         const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
 
-        Blueprint.authenticate(clinicianTokens, '<%= clinicianId %>');
+        Blueprint.authenticate(clinicianTokens);
         // Selecting a client requires an authenticated clinician.
         // Upon selecting a client, a new session is created.
         // Optional properties can be passed to initialize the session with custom data.

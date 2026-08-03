@@ -92,9 +92,42 @@ CSP_FRAME_ORIGINS   https://clinician.blueprint.ai https://mini-widget.blueprint
 partners in early 2026. Allowing only the one you expect today is a latent
 break.
 
-**If you enforce `style-src` without `'unsafe-inline'`**, the loader also injects
-a stylesheet into your page and needs a nonce. Pass it with the `cspNonce`
-setting:
+### Inline scripts need a nonce
+
+The chart pages configure the widget from an inline `<script>` — that is how
+`window.blueprintSettings` gets set. A strict `script-src` blocks inline scripts,
+which means **the widget silently never initializes**: no error on the page, just
+a CSP violation in the console and nothing rendered.
+
+Rather than opening that up with `'unsafe-inline'`, `app.js` generates a fresh
+nonce per request, adds it to `script-src`, and exposes it to the templates:
+
+```js
+const nonce = crypto.randomBytes(16).toString('base64');
+res.locals.cspNonce = nonce;
+// script-src 'self' 'nonce-<nonce>' <your embed origin>
+```
+
+Each inline script then carries it:
+
+```html
+<script nonce="<%= cspNonce %>">
+  window.blueprintSettings = { /* ... */ }
+</script>
+```
+
+The `<script src="...">` that loads the widget does **not** need a nonce — it is
+allowed by the origin in `script-src`.
+
+### Why `style-src` still has `'unsafe-inline'`
+
+Because these templates use inline `style="..."` attributes, which a nonce
+cannot cover. This is a CSP subtlety worth knowing: **if you add a nonce to a
+directive, the browser ignores `'unsafe-inline'` for that directive**. So adding
+a nonce to `style-src` here would break every inline style attribute.
+
+If your application has no inline styles, drop `'unsafe-inline'` from `style-src`
+and pass the same nonce to the widget so the stylesheet it injects is allowed:
 
 ```javascript
 window.blueprintSettings = {
@@ -102,10 +135,6 @@ window.blueprintSettings = {
   cspNonce: 'YOUR_PER_REQUEST_NONCE'
 }
 ```
-
-This sample uses `'unsafe-inline'` for `style-src` to keep the example short, so
-it does not demonstrate `cspNonce`. A production application should prefer the
-nonce.
 
 ## Receiving Webhooks
 

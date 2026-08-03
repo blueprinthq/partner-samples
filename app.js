@@ -8,6 +8,59 @@ const crypto = require('crypto');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Content Security Policy.
+//
+// A restrictive CSP is the single most common reason the Blueprint widget
+// appears to do nothing: the loader script or its iframe gets blocked and the
+// only sign is a console error. Your application needs to allow:
+//
+//   script-src  the embed host, which serves index.min.js
+//   frame-src   BOTH widget origins -- which one is used depends on your
+//               isMinifiedView / isMiniWidgetV2 settings, and that changed for
+//               most partners in early 2026, so allow both
+//
+// The chart pages configure the widget from an inline <script>, which a strict
+// script-src blocks. Rather than opening that up with 'unsafe-inline', each
+// request gets a fresh nonce that the templates stamp onto their inline
+// scripts. That is the pattern a production application should use.
+//
+// Note style-src deliberately keeps 'unsafe-inline': these templates use inline
+// style="..." attributes, which a nonce cannot cover. Adding a nonce to
+// style-src would make the browser *ignore* 'unsafe-inline' for that directive
+// and break them. An application without inline styles should drop
+// 'unsafe-inline' here and pass `cspNonce` in window.blueprintSettings so the
+// stylesheet the widget injects is allowed -- see the README.
+//
+// Blueprint also loads fonts inside its own iframe, which is governed by
+// Blueprint's CSP rather than yours. You only need font origins here if you
+// pass your own via the `fontHref` setting.
+//
+// This runs before express.static so the policy covers static assets too.
+//
+// See https://developer.blueprint.ai for the current origins per environment.
+app.use((_req, res, next) => {
+  const scriptOrigins = process.env.CSP_SCRIPT_ORIGINS ?? '';
+  const frameOrigins = process.env.CSP_FRAME_ORIGINS ?? '';
+
+  const nonce = crypto.randomBytes(16).toString('base64');
+  // Templates read this as `cspNonce` -- Express merges res.locals into the
+  // render locals.
+  res.locals.cspNonce = nonce;
+
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      `script-src 'self' 'nonce-${nonce}' ${scriptOrigins}`.trim(),
+      `frame-src ${frameOrigins}`.trim(),
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+    ].join('; ')
+  );
+
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
@@ -29,6 +82,7 @@ app.use(
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
 
 // Exchange the partner credentials for a server-to-server access token.
 //

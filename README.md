@@ -61,6 +61,81 @@ Each environment loads patient data from corresponding JSON files in the `data` 
 
 You can update these files with patients that match the clients in the Blueprint clinic that you are connecting your partner application to.
 
+## Content Security Policy
+
+If your application sends a CSP header, the Blueprint widget needs two
+allowances or it silently fails to appear — the loader script or its iframe is
+blocked, and the only sign is a console error.
+
+This sample sets a CSP in `app.js` from two environment variables, so you can
+see a working configuration rather than having to derive one:
+
+| Variable | Purpose |
+|---|---|
+| `CSP_SCRIPT_ORIGINS` | Host serving `index.min.js` |
+| `CSP_FRAME_ORIGINS` | Widget iframe origins |
+
+Values per environment are in `.env-cmdrc.json.sample`:
+
+```
+# staging
+CSP_SCRIPT_ORIGINS  https://embed.staging.blueprint.ai
+CSP_FRAME_ORIGINS   https://clinician.staging.blueprint.ai https://mini-widget.staging.blueprint.ai
+
+# production
+CSP_SCRIPT_ORIGINS  https://embed.blueprint.ai
+CSP_FRAME_ORIGINS   https://clinician.blueprint.ai https://mini-widget.blueprint.ai
+```
+
+**Allow both `frame-src` origins.** Which one the widget uses depends on your
+`isMinifiedView` and `isMiniWidgetV2` settings, and the default changed for most
+partners in early 2026. Allowing only the one you expect today is a latent
+break.
+
+### Inline scripts need a nonce
+
+The chart pages configure the widget from an inline `<script>` — that is how
+`window.blueprintSettings` gets set. A strict `script-src` blocks inline scripts,
+which means **the widget silently never initializes**: no error on the page, just
+a CSP violation in the console and nothing rendered.
+
+Rather than opening that up with `'unsafe-inline'`, `app.js` generates a fresh
+nonce per request, adds it to `script-src`, and exposes it to the templates:
+
+```js
+const nonce = crypto.randomBytes(16).toString('base64');
+res.locals.cspNonce = nonce;
+// script-src 'self' 'nonce-<nonce>' <your embed origin>
+```
+
+Each inline script then carries it:
+
+```html
+<script nonce="<%= cspNonce %>">
+  window.blueprintSettings = { /* ... */ }
+</script>
+```
+
+The `<script src="...">` that loads the widget does **not** need a nonce — it is
+allowed by the origin in `script-src`.
+
+### Why `style-src` still has `'unsafe-inline'`
+
+Because these templates use inline `style="..."` attributes, which a nonce
+cannot cover. This is a CSP subtlety worth knowing: **if you add a nonce to a
+directive, the browser ignores `'unsafe-inline'` for that directive**. So adding
+a nonce to `style-src` here would break every inline style attribute.
+
+If your application has no inline styles, drop `'unsafe-inline'` from `style-src`
+and pass the same nonce to the widget so the stylesheet it injects is allowed:
+
+```javascript
+window.blueprintSettings = {
+  containerId: 'blueprint-container',
+  cspNonce: 'YOUR_PER_REQUEST_NONCE'
+}
+```
+
 ## Receiving Webhooks
 
 `POST /webhook-listener` in `app.js` is a worked example of receiving Blueprint

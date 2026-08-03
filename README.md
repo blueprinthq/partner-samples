@@ -205,6 +205,31 @@ This sample application demonstrates typical integration scenarios:
 3. Host the embedded UI in your application and deepen the integration by using the API ("UI + API").
 4. Build your own UI and completely customize the integration via the API ("API Only").
 
+### Switching between the chart styles
+
+Each style is a separate template, selected with the `chartStyle` query
+parameter on the patient chart route. The links on the patients list page set it
+for you.
+
+| URL | Template | Shows |
+|---|---|---|
+| `/patients/:id` | `views/chart.ejs` | Embedded UI driven by the backend APIs (UI + API) |
+| `/patients/:id?chartStyle=uiOnly` | `views/chart-ui-only.ejs` | Embedded UI with no backend API calls |
+| `/patients/:id?chartStyle=miniWidget` | `views/chart-mini-widget.ejs` | Compact embedded UI with custom styling |
+| `/patients/:id?chartStyle=iframe` | `views/chart-with-iframe.ejs` | **Deprecated.** Hand-rolled iframe and raw postMessage |
+
+The iframe template is retained only for partners who cannot load a third-party
+script. It talks to an internal postMessage contract that can change without
+notice and reaches only the older full widget. Start from `chart.ejs` or
+`chart-mini-widget.ejs` instead.
+
+### Supply chain
+
+`.npmrc` sets `min-release-age=21`, which refuses npm packages published in the
+last 21 days, with `min-release-age-exclude=@blueprinthq/*` so Blueprint's own
+packages are exempt. This narrows the window in which a compromised release can
+be pulled into a build. Worth copying into your own project.
+
 Review Blueprint Partner API v2 documentation at
 [https://developer.blueprint.ai](https://developer.blueprint.ai) for more information
 and API reference.

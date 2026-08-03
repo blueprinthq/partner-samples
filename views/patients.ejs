@@ -1,26 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/styles.css" />
-    <title>My EHR - Patient List</title>
+    <%- include('partials/head', { title: 'Patients' }) %>
 </head>
 <body>
-    <h1>My EHR Patient List</h1>
-    <ul>
-        <% items.forEach(item => { %>
-            <li>
-                <div>
-                    <a href="/patients/<%= item.id %>"><%= item.name %></a> - <%= item.age %> years old (embedded UI using backend APIs)
-                    <ul>
-                        <li><a href="/patients/<%= item.id %>?chartStyle=uiOnly">UI Only Version</a> (not using backend APIs)</li>
-                        <li><a href="/patients/<%= item.id %>?chartStyle=miniWidget">Minified embedded UI with custom styles</a></li>
-                        <li><a href="/patients/<%= item.id %>?chartStyle=iframe">IFrame Version</a> (deprecated)</li>
-                    </ul>
+    <div class="layout">
+        <%- include('partials/sidebar') %>
+
+        <div class="main">
+            <header class="header">
+                <h1 class="header-title">Patients</h1>
+            </header>
+
+            <main class="content">
+                <div class="page">
+                    <div class="toolbar">
+                        <p class="hint">
+                            Open a chart to see the Blueprint UI embedded in it. Each chart offers
+                            three embed styles you can switch between.
+                        </p>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Patient ID</th>
+                                    <th>Age</th>
+                                    <th>Diagnosis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% items.forEach(item => { %>
+                                    <tr>
+                                        <td>
+                                            <a class="table-link" href="/patients/<%= item.id %>"><%= item.name %></a>
+                                        </td>
+                                        <td class="mono"><%= item.id %></td>
+                                        <td><%= item.age %></td>
+                                        <td><%= item.diagnosis %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </li>
-        <% }) %>
-    </ul>
+            </main>
+        </div>
+    </div>
 </body>
 </html>

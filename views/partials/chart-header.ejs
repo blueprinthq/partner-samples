@@ -1,0 +1,22 @@
+<%#
+    Patient identity plus the embed-style switcher. Each style is a separate
+    template selected by the `chartStyle` query parameter -- see the README.
+%>
+<div class="page-header">
+    <div>
+        <h2 class="page-title"><%= item.name %></h2>
+        <p class="page-meta"><%= item.id %> &middot; <%= item.age %> years old &middot; <%= item.diagnosis %></p>
+    </div>
+    <div class="page-actions">
+        <a class="button button-secondary" href="/patients">Back to patients</a>
+    </div>
+</div>
+
+<nav class="tabs">
+    <a class="tab <%= chartStyle ? '' : 'active' %>"
+       href="/patients/<%= item.id %>">UI + API</a>
+    <a class="tab <%= chartStyle === 'uiOnly' ? 'active' : '' %>"
+       href="/patients/<%= item.id %>?chartStyle=uiOnly">UI only</a>
+    <a class="tab <%= chartStyle === 'miniWidget' ? 'active' : '' %>"
+       href="/patients/<%= item.id %>?chartStyle=miniWidget">Compact widget</a>
+</nav>

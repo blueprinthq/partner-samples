@@ -6,7 +6,7 @@ Blueprint Partner API v2 to integrate Blueprint into your application.
 ## Getting Started
 
 1. Clone the repository.
-2. Make sure you have `node` and `npm` installed. This sample application has been built and tested with Node.js v22.
+2. Make sure you have `node` and `npm` installed. This sample application has been built and tested with Node.js v24.18.0 (see `.nvmrc`).
 3. Run `npm install` to install the dependencies.
 4. Configure your environment settings in a new `.env-cmdrc.json` file based on the sample with your Blueprint Partner API v2 credentials: `cp .env-cmdrc.json.sample .env-cmdrc.json`
 5. Set up the environment-specific configuration (see Environment Configuration below).

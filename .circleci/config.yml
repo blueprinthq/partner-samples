@@ -7,7 +7,7 @@ orbs:
 jobs:
   run-tests:
     docker:
-      - image: cimg/node:22.0
+      - image: cimg/node:24.18
     steps:
       - checkout
       - restore_cache:

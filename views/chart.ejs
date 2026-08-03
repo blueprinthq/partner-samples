@@ -21,7 +21,7 @@
     </div>
 
     <!-- Customize the embedded Blueprint user interface. -->
-    <script>
+    <script nonce="<%= cspNonce %>">
         window.blueprintSettings = {
             containerId: 'blueprint-container',
             copyNoteButtonText: 'Export to EHR', // Default is "Copy Note"
@@ -40,7 +40,7 @@
     <script src="<%= process.env.BLUEPRINT_WIDGET_URL %>"></script>
 
     <!-- Automatically select a client. -->
-    <script>
+    <script nonce="<%= cspNonce %>">
         // Decode HTML entities and parse JSON string.
         // If your application uses server-side templating you might need to do
         // something like this so that the access token is properly transferred
@@ -56,7 +56,7 @@
         const encodedTokens = '<%- JSON.stringify(clinicianTokens) %>';
         const clinicianTokens = JSON.parse(decodeHtmlEntities(encodedTokens));
 
-        Blueprint.authenticate(clinicianTokens, '<%= clinicianId %>');
+        Blueprint.authenticate(clinicianTokens);
         // Selecting a client requires an authenticated clinician.
         // Upon selecting a client, a new session is created.
         // Optional properties can be passed to initialize the session with custom data.

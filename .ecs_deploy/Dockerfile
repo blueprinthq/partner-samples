@@ -1,4 +1,4 @@
-ARG BASE_IMG_REPO=node:22.12.0-alpine
+ARG BASE_IMG_REPO=node:24.18.0-alpine
 
 FROM ${BASE_IMG_REPO} AS base
 
@@ -13,6 +13,7 @@ COPY . .
 
 COPY .ecs_deploy/docker-entrypoint.sh /usr/local/bin/
 
+RUN npm install -g npm@11
 RUN npm ci
 
 RUN chown -R node . \

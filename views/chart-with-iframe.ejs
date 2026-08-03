@@ -1,3 +1,17 @@
+<%#
+    DEPRECATED -- do not copy this as a starting point.
+
+    This page hand-rolls the iframe and speaks the BP_* postMessage protocol
+    directly, instead of loading the embed script from BLUEPRINT_WIDGET_URL and
+    using the window.Blueprint API as the other chart templates do.
+
+    It is kept only for partners who genuinely cannot load a third-party script.
+    The postMessage contract it uses is internal and can change without notice,
+    and it reaches only the older full widget -- the current compact widget is
+    not addressable this way.
+
+    Use views/chart.ejs or views/chart-mini-widget.ejs instead.
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,7 +42,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="<%= cspNonce %>">
       // Decode HTML entities and parse JSON string.
       // If your application uses server-side templating you might need to do
       // something like this so that the access token is properly transferred
@@ -42,7 +56,7 @@
       }
     </script>
 
-    <script>
+    <script nonce="<%= cspNonce %>">
       window.addEventListener('message', event => {
         if (event.data?.type === 'BP_CLINICIAN_NOT_AUTHENTICATED') {
           // Automatically authenticate the clinian.

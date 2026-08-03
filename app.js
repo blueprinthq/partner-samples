@@ -10,9 +10,57 @@ const port = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
+// Blueprint signs the exact bytes it sends, so verifying a webhook signature
+// requires the raw request body. Re-serializing the parsed body with
+// JSON.stringify() only produces a matching string by luck -- it breaks on
+// non-ASCII content, or if a proxy or parser normalizes anything.
+//
+// body-parser's `verify` hook is the standard way to keep a copy. It has to go
+// here rather than as route middleware on /webhook-listener, because by the
+// time a route runs this parser has already consumed the stream.
+app.use(
+  bodyParser.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Exchange the partner credentials for a server-to-server access token.
+//
+// A production integration should cache this token and reuse it until shortly
+// before it expires (the response includes `expiresIn`, currently 3600
+// seconds). This sample re-authenticates on every call to keep the flow
+// obvious.
+async function getPartnerAccessToken() {
+  const response = await fetch(
+    `${process.env.BLUEPRINT_API_URL}/partners/authenticate`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+      },
+      body: JSON.stringify({
+        clientId: process.env.BLUEPRINT_API_CLIENT_ID,
+        clientSecret: process.env.BLUEPRINT_API_CLIENT_SECRET,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to get partner access token: ${response.status} ${await response.text()}`
+    );
+  }
+
+  const { accessToken } = await response.json();
+  return accessToken;
+}
 
 // Root route - redirect to login
 app.get('/', (_, res) => {
@@ -57,27 +105,13 @@ app.get('/patients/:id', async (req, res) => {
   const chartStyle = req.query.chartStyle;
 
   // Authenticate with the Blueprint server-to-server API using your partner API credentials.
-  const tokenResponse = await fetch(
-    `${process.env.BLUEPRINT_API_URL}/partners/authenticate`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
-      },
-      body: JSON.stringify({
-        clientId: process.env.BLUEPRINT_API_CLIENT_ID,
-        clientSecret: process.env.BLUEPRINT_API_CLIENT_SECRET,
-      }),
-    }
-  );
-
-  if (!tokenResponse.ok) {
-    console.error('Error getting partner access token: ', await tokenResponse.text());
+  let accessToken;
+  try {
+    accessToken = await getPartnerAccessToken();
+  } catch (error) {
+    console.error('Error getting partner access token: ', error);
     return res.status(500).send('Error getting partner access token');
   }
-
-  const { accessToken } = await tokenResponse.json();
 
   // Automatically authenticate the clinician.
   // In this example the EHR is storing the Blueprint id for the clinician.
@@ -133,82 +167,129 @@ app.get('/patients/:id', async (req, res) => {
   }
 });
 
-// This is an example implementation of a webhook listener for events fired from the Blueprint API.
-  app.post('/webhook-listener', async (req, res) => {
-    // Verify X-Blueprint-Signature using modern crypto practices
-    try {
-      const hmac = crypto.createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET);
-      hmac.update(JSON.stringify(req.body));
-      const signature = hmac.digest('hex');
+// Verify the X-Blueprint-Signature header against the raw request body.
+//
+// The signature is an HMAC-SHA256 hex digest keyed with your partner
+// clientSecret -- not your API key. Compare in constant time: a plain !==
+// leaks timing information about how much of the digest matched.
+function hasValidSignature(req) {
+  const expected = crypto
+    .createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET)
+    .update(req.rawBody)
+    .digest('hex');
 
-    if (req.headers['x-blueprint-signature'] !== signature) {
+  const received = Buffer.from(String(req.headers['x-blueprint-signature'] ?? ''), 'utf8');
+  const computed = Buffer.from(expected, 'utf8');
+
+  // timingSafeEqual throws on a length mismatch, so check length first.
+  return received.length === computed.length && crypto.timingSafeEqual(received, computed);
+}
+
+// Fetch one of the resource URLs supplied in a webhook payload.
+async function fetchBlueprintResource(url) {
+  const accessToken = await getPartnerAccessToken();
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Token': accessToken,
+      'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// This is an example implementation of a webhook listener for events fired from
+// the Blueprint API. All event types are delivered to the single callbackUrl
+// configured for your partner organization, so branch on eventType.
+app.post('/webhook-listener', async (req, res) => {
+  try {
+    if (!hasValidSignature(req)) {
+      // A bad signature will never become valid, so a non-retryable 401 is the
+      // right answer here.
       return res.status(401).send('Invalid signature');
     }
 
-    // Possible event types are:
-    // - progress_note_generated
-    // - progress_note_regenerated
-    // - progress_note_finalized
-    // - assessment_completed
-    const eventType = req.body.eventType;
+    const { eventType, payload } = req.body;
 
-    const {
-      progressNoteId,
-      sessionId,
-      clientId,
-      clinicianId,
-      clinicId,
-      organizationId,
-      progressNoteUrl,
-    } = req.body.payload;
+    // Note the payloads differ by event: only the progress note events carry
+    // progressNoteUrl. Reading it unconditionally would fetch `undefined` on
+    // half of these.
+    switch (eventType) {
+      case 'progress_note_generated':
+      case 'progress_note_regenerated':
+      case 'progress_note_finalized': {
+        // `organization` is also present on these payloads but is a deprecated
+        // duplicate of organizationId -- use organizationId.
+        const { progressNoteId, sessionId, sessionExternalId, clientId, clinicianId, clinicId, organizationId, progressNoteUrl } = payload;
 
-    // Authenticate with the Blueprint server-to-server API so we can fetch the note.
-    const tokenResponse = await fetch(
-      `${process.env.BLUEPRINT_API_URL}/partners/authenticate`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
-        },
-        body: JSON.stringify({
-          clientId: process.env.BLUEPRINT_API_CLIENT_ID,
-          clientSecret: process.env.BLUEPRINT_API_CLIENT_SECRET,
-        }),
+        const {
+          id,
+          note, // Ordered array of sections, each with key, title and content.
+          template, // Describes the note type and the sections it should contain.
+          preferences, // The preferences used to generate the note.
+        } = await fetchBlueprintResource(progressNoteUrl);
+
+        console.log(`${eventType}: stored note ${id} for session ${sessionId}`);
+        break;
       }
-    );
 
-    if (!tokenResponse.ok) {
-      console.error('Error getting partner access token: ', await tokenResponse.text());
-      return res.status(500).send('Error getting partner access token');
+      case 'transcript_ready': {
+        const { sessionId, transcriptUrl } = payload;
+        const { transcriptItems } = await fetchBlueprintResource(transcriptUrl);
+
+        console.log(`transcript_ready: ${transcriptItems.length} items for session ${sessionId}`);
+        break;
+      }
+
+      case 'mdm_elements_identified': {
+        // Prescriber note types only.
+        const { sessionId, mdmUrl } = payload;
+        const mdm = await fetchBlueprintResource(mdmUrl);
+
+        console.log(`mdm_elements_identified: session ${sessionId}`, mdm.problemsAddressed);
+        break;
+      }
+
+      case 'session_transcript_error': {
+        // No resource URL on this one -- transcription failed, so no transcript
+        // or progress note will be produced for this session.
+        const { sessionId, error } = payload;
+
+        console.error(`session_transcript_error: session ${sessionId}: ${error}`);
+        break;
+      }
+
+      case 'assessment_completed': {
+        // This payload is client-scoped rather than session-scoped, and uses
+        // patientId where every other event uses clientId.
+        const { patientId, assessmentScores } = payload;
+
+        for (const { assessmentScoreUrl } of assessmentScores) {
+          const { assessmentId, score } = await fetchBlueprintResource(assessmentScoreUrl);
+          console.log(`assessment_completed: ${assessmentId} scored ${score} for client ${patientId}`);
+        }
+        break;
+      }
+
+      default:
+        // Acknowledge anything unrecognized. Blueprint retries only on 5xx, 408
+        // and 429 -- any other non-2xx drops the event permanently, so
+        // returning an error for a new event type would lose it.
+        console.warn(`Unrecognized Blueprint event type: ${eventType}`);
+        break;
     }
 
-    const { accessToken } = await tokenResponse.json();
-
-    // Given the progressNoteUrl, fetch the note content.
-    const noteResponse = await fetch(progressNoteUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Token': accessToken,
-        'X-Api-Key': `${process.env.BLUEPRINT_API_KEY}`,
-      },
-    });
-
-    if (!noteResponse.ok) {
-      throw new Error(`Failed to fetch note: ${noteResponse.status} ${noteResponse.statusText}`);
-    }
-
-    const {
-      id,
-      //sessionId, // We already captured sessionId above.
-      note, // This is an object that will have an array of sections matching the template.
-      template, // This is an object describing the note and its sections.
-      preferences, // This an oject describng the preferences used to generate the note.
-    } = await noteResponse.json();
-
-    res.send();
+    res.status(200).send('ok');
   } catch (error) {
+    // A 5xx tells Blueprint to retry. Use it for anything transient, and never
+    // return a 4xx just because processing failed on our side.
     console.error('Webhook processing error:', error);
     res.status(500).send('Error processing webhook');
   }

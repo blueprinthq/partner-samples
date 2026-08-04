@@ -24,12 +24,11 @@ const port = process.env.PORT || 3000;
 // request gets a fresh nonce that the templates stamp onto their inline
 // scripts. That is the pattern a production application should use.
 //
-// Note style-src deliberately keeps 'unsafe-inline': these templates use inline
-// style="..." attributes, which a nonce cannot cover. Adding a nonce to
-// style-src would make the browser *ignore* 'unsafe-inline' for that directive
-// and break them. An application without inline styles should drop
-// 'unsafe-inline' here and pass `cspNonce` in window.blueprintSettings so the
-// stylesheet the widget injects is allowed -- see the README.
+// Note style-src keeps 'unsafe-inline' for the stylesheet the widget injects
+// into the page. The alternative is to drop it and pass `cspNonce` in
+// window.blueprintSettings so the widget stamps your nonce onto that stylesheet
+// -- see the README. It has to be one or the other: adding a nonce to a
+// directive makes the browser *ignore* 'unsafe-inline' for that directive.
 //
 // Blueprint also loads fonts inside its own iframe, which is governed by
 // Blueprint's CSP rather than yours. You only need font origins here if you
@@ -206,16 +205,14 @@ app.get('/patients/:id', async (req, res) => {
       case 'miniWidget':
         pageTemplate = 'chart-mini-widget';
         break;
-      case 'iframe':
-        pageTemplate = 'chart-with-iframe';
-        break;
       default:
         break;
     }
 
     // The patient object in this example is expected to have the Blueprint id.
     // The clinicianTokens and clinicianId values are not used by the chart-ui-only template.
-    res.render(pageTemplate, { item: patient, clinicianTokens: clinicianTokens, clinicianId: clinicianId });
+    // chartStyle is passed through so the page can highlight the active tab.
+    res.render(pageTemplate, { item: patient, clinicianTokens: clinicianTokens, clinicianId: clinicianId, chartStyle: chartStyle });
   } else {
     res.status(404).send('Patient not found');
   }

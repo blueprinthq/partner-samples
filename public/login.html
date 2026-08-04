@@ -5,52 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/styles.css" />
     <title>My EHR - Login</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .login-container {
-            max-width: 400px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            box-sizing: border-box;
-        }
-        input[type="submit"] {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #218838;
-        }
-    </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>My EHR Login</h2>
-        <form action="/login" method="POST">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+    <div class="login-layout">
+        <div class="login-card">
+            <div class="login-brand">
+                <span class="logo-icon">&#10022;</span>
+                <span>My EHR</span>
+            </div>
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+            <form class="form" action="/login" method="POST">
+                <div class="field">
+                    <label class="label" for="username">Username</label>
+                    <input class="input" type="text" id="username" name="username" required>
+                </div>
 
-            <input type="submit" value="Login">
-        </form>
+                <div class="field">
+                    <label class="label" for="password">Password</label>
+                    <input class="input" type="password" id="password" name="password" required>
+                </div>
+
+                <button class="button button-block" type="submit">Sign in</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>

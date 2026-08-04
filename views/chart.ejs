@@ -1,22 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/styles.css" />
-    <title>My EHR - Patient Chart</title>
+    <%- include('partials/head', { title: 'Patient Chart' }) %>
 </head>
 <body>
-    <div class="container">
-        <div class="column">
-            <h1>My EHR Patient Chart</h1>
-            <h2><%= item.name %></h2>
-            <p><strong>Age:</strong> <%= item.age %></p>
-            <p><strong>Diagnosis:</strong> <%= item.diagnosis %></p>
-            <textarea id="progress-note" style="width: 320px; height: 240px;"></textarea>
-        </div>
-        <div class="column">
-            <div id="blueprint-container"></div>
+    <div class="layout">
+        <%- include('partials/sidebar') %>
+
+        <div class="main">
+            <header class="header">
+                <h1 class="header-title">Patient Chart</h1>
+            </header>
+
+            <main class="content">
+                <div class="page">
+                    <%- include('partials/chart-header', { item: item, chartStyle: chartStyle }) %>
+
+                    <div class="chart-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Progress Note</h3>
+                                <p class="card-subtitle">
+                                    The EHR's own note field. "Export to EHR" in the Blueprint UI writes into it.
+                                </p>
+                            </div>
+                            <textarea id="progress-note" class="textarea"></textarea>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Blueprint</h3>
+                                <p class="card-subtitle">
+                                    Embedded UI driven by the backend APIs. The clinician is authenticated and
+                                    the client selected server-side, so the widget opens ready to record.
+                                </p>
+                            </div>
+                            <div id="blueprint-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 
@@ -80,9 +103,5 @@
             progressNote.value = note.note;
         });
     </script>
-
-    <p>
-        <a href="/patients">Back to Patient List</a>
-    </p>
 </body>
 </html>

@@ -1,7 +1,7 @@
-# Blueprint Partner API Samples
+# Blueprint Partner Platform Samples
 
 This repository includes a sample application that demonstrates how to use the 
-Blueprint Partner API v2 to integrate Blueprint into your application.
+Blueprint API and SDK to integrate Blueprint into your application.
 
 ## Getting Started
 

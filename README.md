@@ -1,7 +1,7 @@
-# Blueprint Partner API Samples
+# Blueprint Partner Platform Samples
 
 This repository includes a sample application that demonstrates how to use the 
-Blueprint Partner API v2 to integrate Blueprint into your application.
+Blueprint API and SDK to integrate Blueprint into your application.
 
 ## Getting Started
 
@@ -121,13 +121,12 @@ allowed by the origin in `script-src`.
 
 ### Why `style-src` still has `'unsafe-inline'`
 
-Because these templates use inline `style="..."` attributes, which a nonce
-cannot cover. This is a CSP subtlety worth knowing: **if you add a nonce to a
-directive, the browser ignores `'unsafe-inline'` for that directive**. So adding
-a nonce to `style-src` here would break every inline style attribute.
+Because the widget injects its own stylesheet into your page. This sample keeps
+`'unsafe-inline'` rather than threading a nonce through to it.
 
-If your application has no inline styles, drop `'unsafe-inline'` from `style-src`
-and pass the same nonce to the widget so the stylesheet it injects is allowed:
+The stricter option is to drop `'unsafe-inline'` from `style-src` and pass the
+same per-request nonce to the widget, so the stylesheet it injects carries your
+nonce:
 
 ```javascript
 window.blueprintSettings = {
@@ -135,6 +134,11 @@ window.blueprintSettings = {
   cspNonce: 'YOUR_PER_REQUEST_NONCE'
 }
 ```
+
+It has to be one or the other. This is a CSP subtlety worth knowing: **if you add
+a nonce to a directive, the browser ignores `'unsafe-inline'` for that
+directive**. So if your page still relies on inline `style="..."` attributes
+anywhere, adding a nonce to `style-src` will break them.
 
 ## Receiving Webhooks
 
@@ -208,20 +212,20 @@ This sample application demonstrates typical integration scenarios:
 ### Switching between the chart styles
 
 Each style is a separate template, selected with the `chartStyle` query
-parameter on the patient chart route. The links on the patients list page set it
-for you.
+parameter on the patient chart route. The tabs at the top of the chart page set
+it for you.
 
 | URL | Template | Shows |
 |---|---|---|
 | `/patients/:id` | `views/chart.ejs` | Embedded UI driven by the backend APIs (UI + API) |
 | `/patients/:id?chartStyle=uiOnly` | `views/chart-ui-only.ejs` | Embedded UI with no backend API calls |
 | `/patients/:id?chartStyle=miniWidget` | `views/chart-mini-widget.ejs` | Compact embedded UI with custom styling |
-| `/patients/:id?chartStyle=iframe` | `views/chart-with-iframe.ejs` | **Deprecated.** Hand-rolled iframe and raw postMessage |
 
-The iframe template is retained only for partners who cannot load a third-party
-script. It talks to an internal postMessage contract that can change without
-notice and reaches only the older full widget. Start from `chart.ejs` or
-`chart-mini-widget.ejs` instead.
+Earlier versions of this sample shipped a fourth template that hand-rolled the
+iframe and spoke the `BP_*` postMessage protocol directly. That approach is no
+longer supported and has been removed. Load the embed script from
+`BLUEPRINT_WIDGET_URL` and drive it through the `window.Blueprint` API, as all
+three templates above do.
 
 ### Supply chain
 

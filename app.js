@@ -218,22 +218,67 @@ app.get('/patients/:id', async (req, res) => {
   }
 });
 
-// Verify the X-Blueprint-Signature header against the raw request body.
+// Reject a delivery whose timestamp is too old to be a live retry. Without
+// this, a captured request stays replayable forever.
+const TIMESTAMP_TOLERANCE_SECONDS = 5 * 60;
+
+function timestampWithinTolerance(header) {
+  const sent = Number(header);
+  if (!Number.isFinite(sent)) return false;
+
+  return Math.abs(Math.floor(Date.now() / 1000) - sent) <= TIMESTAMP_TOLERANCE_SECONDS;
+}
+
+function constantTimeEquals(a, b) {
+  const left = Buffer.from(a, 'utf8');
+  const right = Buffer.from(b, 'utf8');
+
+  // timingSafeEqual throws on a length mismatch, so check length first.
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+// Verify the signature headers against the raw request body.
 //
-// The signature is an HMAC-SHA256 hex digest keyed with your partner
-// clientSecret -- not your API key. Compare in constant time: a plain !==
-// leaks timing information about how much of the digest matched.
+// Blueprint signs `{webhook-id}.{webhook-timestamp}.{raw body}` with
+// HMAC-SHA256, keyed with the bytes base64-decoded from your signing secret
+// (the part after the `whsec_` prefix).
+//
+// The header can carry more than one `v1,` signature. During a secret rotation
+// Blueprint signs under both the outgoing and the incoming key, so accepting
+// any match is what lets you install the new secret before the old one is
+// retired.
 function hasValidSignature(req) {
+  const secret = process.env.BLUEPRINT_WEBHOOK_SIGNING_SECRET;
+  const webhookId = String(req.headers['webhook-id'] ?? '');
+  const timestamp = String(req.headers['webhook-timestamp'] ?? '');
+  const signatureHeader = String(req.headers['webhook-signature'] ?? '');
+
+  if (!secret || !webhookId || !signatureHeader) return false;
+  if (!timestampWithinTolerance(timestamp)) return false;
+
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+  const expected = `v1,${crypto
+    .createHmac('sha256', key)
+    .update(`${webhookId}.${timestamp}.${req.rawBody}`)
+    .digest('base64')}`;
+
+  return signatureHeader
+    .split(' ')
+    .some((candidate) => constantTimeEquals(candidate, expected));
+}
+
+// Deprecated. Blueprint also sends X-Blueprint-Signature: an HMAC-SHA256 hex
+// digest of the body alone, keyed with your partner clientSecret. It is
+// replayable and ties your webhook verification to your API credential, so it
+// is being removed -- move to hasValidSignature above. Kept here only to show
+// what the old scheme was.
+function hasValidLegacySignature(req) {
   const expected = crypto
     .createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET)
     .update(req.rawBody)
     .digest('hex');
 
-  const received = Buffer.from(String(req.headers['x-blueprint-signature'] ?? ''), 'utf8');
-  const computed = Buffer.from(expected, 'utf8');
-
-  // timingSafeEqual throws on a length mismatch, so check length first.
-  return received.length === computed.length && crypto.timingSafeEqual(received, computed);
+  return constantTimeEquals(String(req.headers['x-blueprint-signature'] ?? ''), expected);
 }
 
 // Fetch one of the resource URLs supplied in a webhook payload.

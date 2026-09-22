@@ -180,14 +180,35 @@ constant-time via `crypto.timingSafeEqual`.
 
 ### Verifying the signature
 
-Three headers carry the signature. `hasValidSignature` in `app.js` is a complete
-worked implementation — the scheme is small enough to implement directly:
+Three headers carry the signature:
 
 | Header | Meaning |
 |---|---|
 | `webhook-id` | Stable event id, identical across retries. Dedupe on it. |
 | `webhook-timestamp` | Unix seconds. Reject anything outside ±5 minutes. |
 | `webhook-signature` | One or more space-separated `v1,<base64>` signatures over `{webhook-id}.{webhook-timestamp}.{raw body}`. |
+
+Blueprint's signature format is compatible with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks)
+libraries, so you should not need to write verification yourself. `app.js` uses
+the Node one:
+
+```js
+const { Webhook, WebhookVerificationError } = require('standardwebhooks')
+
+const webhook = new Webhook(process.env.BLUEPRINT_WEBHOOK_SIGNING_SECRET)
+const event = webhook.verify(rawBody, req.headers)   // throws if invalid
+```
+
+`verify()` handles the timestamp tolerance, matching against every signature in
+the header, and constant-time comparison, and returns the parsed payload.
+Equivalent libraries exist for Python, Go, Java, Ruby, PHP, Rust and C#.
+
+**Pass the raw request bytes**, not a re-serialised object — re-serialising only
+matches by luck and breaks the moment anything reorders keys. This sample keeps
+a copy via body-parser's `verify` hook for exactly that reason.
+
+If you cannot take the dependency, the construction is below and is small enough
+to implement directly.
 
 The signing key is a **webhook signing secret** (`whsec_…`), separate from your
 `clientId`/`clientSecret`. Rotating one does not affect the other. The bytes you

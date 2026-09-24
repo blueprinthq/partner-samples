@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
+const { Webhook, WebhookVerificationError } = require('standardwebhooks');
 const fs = require('fs');
 const crypto = require('crypto');
 
@@ -218,22 +219,43 @@ app.get('/patients/:id', async (req, res) => {
   }
 });
 
-// Verify the X-Blueprint-Signature header against the raw request body.
+function constantTimeEquals(a, b) {
+  const left = Buffer.from(a, 'utf8');
+  const right = Buffer.from(b, 'utf8');
+
+  // timingSafeEqual throws on a length mismatch, so check length first.
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+// Blueprint's signature format is compatible with the `standardwebhooks`
+// libraries, so verification is a library call rather than hand-rolled crypto.
+// The same libraries exist for Python, Go, Java, Ruby, PHP, Rust and C#.
 //
-// The signature is an HMAC-SHA256 hex digest keyed with your partner
-// clientSecret -- not your API key. Compare in constant time: a plain !==
-// leaks timing information about how much of the digest matched.
-function hasValidSignature(req) {
+// verify() handles all of the details you would otherwise get wrong: the
+// timestamp tolerance that stops a captured delivery being replayed, matching
+// against every signature in the header, and a constant-time comparison. It
+// returns the parsed payload, or throws WebhookVerificationError.
+//
+// Pass the raw bytes. Re-serialising the parsed body only matches by luck and
+// breaks the moment anything reorders keys.
+const webhook = new Webhook(process.env.BLUEPRINT_WEBHOOK_SIGNING_SECRET);
+
+function verifySignature(req) {
+  return webhook.verify(req.rawBody, req.headers);
+}
+
+// Deprecated. Blueprint also sends X-Blueprint-Signature: an HMAC-SHA256 hex
+// digest of the body alone, keyed with your partner clientSecret. It is
+// replayable and ties your webhook verification to your API credential, so it
+// is being removed -- move to verifySignature above. Kept here only to show
+// what the old scheme was.
+function hasValidLegacySignature(req) {
   const expected = crypto
     .createHmac('sha256', process.env.BLUEPRINT_API_CLIENT_SECRET)
     .update(req.rawBody)
     .digest('hex');
 
-  const received = Buffer.from(String(req.headers['x-blueprint-signature'] ?? ''), 'utf8');
-  const computed = Buffer.from(expected, 'utf8');
-
-  // timingSafeEqual throws on a length mismatch, so check length first.
-  return received.length === computed.length && crypto.timingSafeEqual(received, computed);
+  return constantTimeEquals(String(req.headers['x-blueprint-signature'] ?? ''), expected);
 }
 
 // Fetch one of the resource URLs supplied in a webhook payload.
@@ -261,7 +283,10 @@ async function fetchBlueprintResource(url) {
 // configured for your partner organization, so branch on eventType.
 app.post('/webhook-listener', async (req, res) => {
   try {
-    if (!hasValidSignature(req)) {
+    try {
+      verifySignature(req);
+    } catch (error) {
+      if (!(error instanceof WebhookVerificationError)) throw error;
       // A bad signature will never become valid, so a non-retryable 401 is the
       // right answer here.
       return res.status(401).send('Invalid signature');

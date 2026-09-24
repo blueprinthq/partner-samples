@@ -178,7 +178,58 @@ than re-serializing the parsed body with `JSON.stringify()` — which only match
 by luck and breaks if anything reformats the payload in transit. Comparison is
 constant-time via `crypto.timingSafeEqual`.
 
-The signing key is your **`clientSecret`**, not your API key.
+### Verifying the signature
+
+Three headers carry the signature:
+
+| Header | Meaning |
+|---|---|
+| `webhook-id` | Stable event id, identical across retries. Dedupe on it. |
+| `webhook-timestamp` | Unix seconds. Reject anything outside ±5 minutes. |
+| `webhook-signature` | One or more space-separated `v1,<base64>` signatures over `{webhook-id}.{webhook-timestamp}.{raw body}`. |
+
+Blueprint's signature format is compatible with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks)
+libraries, so you should not need to write verification yourself. `app.js` uses
+the Node one:
+
+```js
+const { Webhook, WebhookVerificationError } = require('standardwebhooks')
+
+const webhook = new Webhook(process.env.BLUEPRINT_WEBHOOK_SIGNING_SECRET)
+const event = webhook.verify(rawBody, req.headers)   // throws if invalid
+```
+
+`verify()` handles the timestamp tolerance, matching against every signature in
+the header, and constant-time comparison, and returns the parsed payload.
+Equivalent libraries exist for Python, Go, Java, Ruby, PHP, Rust and C#.
+
+**Pass the raw request bytes**, not a re-serialised object — re-serialising only
+matches by luck and breaks the moment anything reorders keys. This sample keeps
+a copy via body-parser's `verify` hook for exactly that reason.
+
+If you cannot take the dependency, the construction is below and is small enough
+to implement directly.
+
+The signing key is a **webhook signing secret** (`whsec_…`), separate from your
+`clientId`/`clientSecret`. Rotating one does not affect the other. The bytes you
+HMAC with are the base64 decoding of everything after the `whsec_` prefix.
+
+**`webhook-signature` can hold more than one signature.** During a rotation
+Blueprint signs the same delivery under both the outgoing and the incoming
+secret, so accept the delivery if *any* signature matches. That overlap is what
+lets you install a new secret and verify it against live traffic before the old
+one is retired — no coordinated cutover, no downtime.
+
+Ask your Blueprint contact to rotate the secret. You get the new value, both are
+accepted for the overlap window you agree on, then the old one is retired. A new
+key propagates to the senders within about a minute.
+
+**`X-Blueprint-Signature` is deprecated.** It is a hex HMAC of the body alone,
+keyed with your `clientSecret`. Because nothing in it is bound to a timestamp,
+a captured delivery stays replayable forever, and the key doubles as your API
+credential. It is still sent alongside the headers above until every partner has
+migrated, and `hasValidLegacySignature` in `app.js` shows the old scheme for
+reference. Move to `webhook-signature`.
 
 **Return 2xx for events you do not recognize.** Blueprint retries only on 5xx,
 408 and 429. Any other non-2xx drops the event permanently with no notification,

@@ -201,7 +201,26 @@ const event = webhook.verify(rawBody, req.headers)   // throws if invalid
 
 `verify()` handles the timestamp tolerance, matching against every signature in
 the header, and constant-time comparison, and returns the parsed payload.
-Equivalent libraries exist for Python, Go, Java, Ruby, PHP, Rust and C#.
+
+### Open source libraries
+
+You do not have to integrate in Node. The Standard Webhooks project maintains
+MIT-licensed verifiers with the same two-call shape, indexed at
+[standard-webhooks/libraries](https://github.com/standard-webhooks/standard-webhooks/tree/main/libraries):
+
+| Language | Package | Install |
+| --- | --- | --- |
+| JavaScript / TypeScript | [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) | `npm install standardwebhooks` |
+| Python | [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) | `pip install standardwebhooks` |
+| Go | [`libraries/go`](https://pkg.go.dev/github.com/standard-webhooks/standard-webhooks/libraries/go) | `go get github.com/standard-webhooks/standard-webhooks/libraries/go` |
+| PHP | [`standard-webhooks/standard-webhooks`](https://packagist.org/packages/standard-webhooks/standard-webhooks) | `composer require standard-webhooks/standard-webhooks` |
+| Ruby | `standardwebhooks` | `gem install standardwebhooks` |
+| Rust | `standardwebhooks` | `cargo add standardwebhooks` |
+| Java / Kotlin | `com.standardwebhooks:standardwebhooks` | Maven Central |
+| C# / .NET | `StandardWebhooks` | NuGet — community maintained, verifies `v1` |
+
+Construct one verifier per signing secret you hold and accept the delivery if
+any of them verifies, so a rotation does not break you.
 
 **Pass the raw request bytes**, not a re-serialised object — re-serialising only
 matches by luck and breaks the moment anything reorders keys. This sample keeps
@@ -225,11 +244,22 @@ accepted for the overlap window you agree on, then the old one is retired. A new
 key propagates to the senders within about a minute.
 
 **`X-Blueprint-Signature` is deprecated.** It is a hex HMAC of the body alone,
-keyed with your `clientSecret`. Because nothing in it is bound to a timestamp,
-a captured delivery stays replayable forever, and the key doubles as your API
-credential. It is still sent alongside the headers above until every partner has
-migrated, and `hasValidLegacySignature` in `app.js` shows the old scheme for
-reference. Move to `webhook-signature`.
+keyed with your `clientSecret`. Nothing in it is bound to an id or a timestamp,
+so there is no replay window to enforce and no id to dedupe retries on, and the
+key doubles as your API credential, so the two cannot be rotated independently.
+`hasValidLegacySignature` in `app.js` shows the old scheme for reference.
+
+Migrating needs no coordinated cutover, because the two schemes are independent
+headers on the same delivery:
+
+1. Ask your Blueprint contact for a webhook signing secret (`whsec_…`) if you do
+   not have one. Partners provisioned recently were issued one at setup.
+2. Add a `webhook-signature` check with one of the libraries above, keeping your
+   existing `X-Blueprint-Signature` check. Accept the delivery if either passes.
+3. Confirm against live traffic that the new check is passing.
+4. Delete the `X-Blueprint-Signature` check and stop reading the header.
+
+Step 2 is safe to ship on its own.
 
 **Return 2xx for events you do not recognize.** Blueprint retries only on 5xx,
 408 and 429. Any other non-2xx drops the event permanently with no notification,

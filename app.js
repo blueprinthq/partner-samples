@@ -238,9 +238,19 @@ function constantTimeEquals(a, b) {
 //
 // Pass the raw bytes. Re-serialising the parsed body only matches by luck and
 // breaks the moment anything reorders keys.
-const webhook = new Webhook(process.env.BLUEPRINT_WEBHOOK_SIGNING_SECRET);
+//
+// Built on first use rather than at startup, so the rest of the sample still
+// runs when no signing secret is configured.
+let webhook;
 
 function verifySignature(req) {
+  if (!webhook) {
+    const secret = process.env.BLUEPRINT_WEBHOOK_SIGNING_SECRET;
+    // Not a WebhookVerificationError: a missing secret is our misconfiguration,
+    // so the route answers 500 and Blueprint retries once it is fixed.
+    if (!secret) throw new Error('BLUEPRINT_WEBHOOK_SIGNING_SECRET is not set');
+    webhook = new Webhook(secret);
+  }
   return webhook.verify(req.rawBody, req.headers);
 }
 
